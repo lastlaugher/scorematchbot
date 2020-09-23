@@ -63,21 +63,21 @@ def open_box(adb: Adb):
     unlock_template_path = 'templates/tap_to_unlock.png'
     coordinates = config.box_locs
 
-    for coordinate in coordinates:
-        logging.info('Trying to find box to open')
+    for idx, coordinate in enumerate(coordinates, start=1):
+        logging.info(f'Trying to find box {idx} to open')
         matched = match_template(adb, open_template_path, coordinate)
 
         if matched:
-            logging.info('Found box to open')
+            logging.info(f'Found box {idx} to open')
             touch_template(adb, coordinate)
             open_cards(adb)
             return
 
-        logging.info('Trying to find box to unlock')
+        logging.info(f'Trying to find box {idx} to unlock')
         matched = match_template(adb, unlock_template_path, coordinate)
 
         if matched:
-            logging.info('Found box to unlock')
+            logging.info(f'Found box {idx} to unlock')
             touch_template(adb, coordinate)
             touch(adb, config.start_unlock_loc)
             return
