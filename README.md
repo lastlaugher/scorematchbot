@@ -1,19 +1,17 @@
 # Score! Match bot
-This is an automated bot for Score! Match mobile game. *Implementation is in progress. It'll be released soon. Stay tuned.*
+This is an automated bot for Score! Match mobile game. *Implementation is in progress. Stay tuned.*
 
 ## Features
-- [ ] Open boxes every 4 hours
-- [ ] Open boxes whose waiting time is over
-- [ ] Shoot into the corner in penalty or free kick
-- [ ] Shoot into the corner in penalty kick
+- [X] Open packages every 4 hours
+- [X] Open boxes whose waiting time is over
+- [ ] Shoot into the corner in penalty kick/penalty shootout/free kick
 - [ ] Play game
 - [ ] Chat
 
 ## Environment
 - Windows
-- Memu or other Android emulator
+- Memu Android Emulator
 - Python3
-- OpenCV
 
 ## Installation
 
