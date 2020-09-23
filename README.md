@@ -16,7 +16,7 @@ This is an automated bot for `Score! Match` mobile game. *Implementation is in p
 ### Menu
 - Download [Memu Android Emulator](https://www.memuplay.com/) 
 ### Score! Match APK
-- Currently, it can't be found in Google Play. From googling, you can find the APK file.
+- Currently, it can't be found in Google Play. From Googling, you can find the APK file.
 - Install the downloaded APK in Memu
 ### smbot
 - Download this code repository and unzip
