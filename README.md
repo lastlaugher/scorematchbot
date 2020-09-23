@@ -18,8 +18,10 @@ This is an automated bot for `Score! Match` mobile game. *Implementation is in p
 ### Score! Match APK
 - Currently, it can't be found in Google Play. From googling, you can find the APK file.
 - Install the downloaded APK in Memu
+### smbot
+- Download this code repository and unzip
 
 ## Usage
-- Run `Score! Match` application in Menu
-- (Optional) Log in with Facebook account if needed
-- Run `smbot.exe`
+1. Run `Score! Match` application in Menu
+2. (Optional) Log in with Facebook account if needed
+3. Run `smbot.exe` in the unzipped directory
