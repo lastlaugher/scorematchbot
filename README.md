@@ -6,7 +6,9 @@ This is an automated bot for `Score! Match` mobile game. *Implementation is in p
 - [X] Open boxes whose waiting time is over
 - [ ] Shoot into the corner in penalty kick/penalty shootout/free kick
 - [ ] Play game
+- [ ] Show status (Bux, Gem, Star, and Arena)
 - [ ] Chat
+
 
 ## Environment
 - Windows
