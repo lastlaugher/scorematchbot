@@ -1,5 +1,6 @@
 import time
 import logging
+import random
 
 import cv2
 import numpy as np
@@ -110,3 +111,18 @@ def match_kick(adb:Adb):
     score = image_processing.diff_image(template_image, sub_image)
 
     return True if score > 0.8 else False
+
+def kick_penalty(adb:Adb):
+    locations = [
+        config.penalty_left_corner_loc,
+        config.penalty_center_top_loc,
+        config.penalty_right_corner_loc,
+    ]
+    
+    loc = random.randint(0, 2)
+    start_x = config.penalty_start_loc[0]
+    start_y = config.penalty_start_loc[1]
+    end_x = locations[loc][0]
+    end_y = locations[loc][1]
+    
+    adb.swipe(start_x, start_y, end_x, end_y, 500)
