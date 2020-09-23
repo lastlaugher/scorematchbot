@@ -23,7 +23,7 @@ def match_template(adb:Adb, template_path:str, coordinate:list):
 
     logging.debug(f'diff score: {score}')
 
-    return True if score > 0.8 else False
+    return True if score > 0.75 else False
 
 def touch_template(adb:Adb, coordinate:list):
     x = coordinate[0]
