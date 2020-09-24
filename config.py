@@ -11,11 +11,14 @@ box_locs = [
 ]
 rewards_loc = [344, 812, 357, 123]
 open_cards_finish_loc = [587, 1148, 117, 123]
-start_unlock_loc = [370, 926]
+start_unlock_locs = [
+    [370, 926],
+    [370, 1070]
+]
 close_loc = [640, 260]
 go_back_loc = [30, 1200]
 
 penalty_start_loc = [360, 950]
-penalty_left_corner_loc = [204, 582]
-penalty_center_top_loc = [357, 582]
-penalty_right_corner_loc = [516, 582]
+penalty_left_corner_loc = [204, 590]
+penalty_center_top_loc = [357, 590]
+penalty_right_corner_loc = [516, 590]

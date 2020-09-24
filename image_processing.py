@@ -1,7 +1,12 @@
 import numpy as np
 import cv2
 
-def diff_image(image1: np.ndarray, image2: np.ndarray, mask: np.ndarray = None):
+def diff_image(image1: np.ndarray, image2: np.ndarray, mask: np.ndarray = None, color: bool = True):
+    if not color:
+        image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+        image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+        mask   = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
     if mask:
         diff = np.abs(image1[mask > 0] - image2[mask > 0])
     else:

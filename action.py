@@ -13,7 +13,7 @@ class Action():
     def __init__(self):
         self.adb = Adb()
 
-    def match_template(self, template_path:str, coordinate:list):
+    def match_template(self, template_path:str, coordinate:list, threshold:float = 0.8, color:bool = True):
         template_image = cv2.imread(template_path)
 
         x = coordinate[0]
@@ -24,11 +24,11 @@ class Action():
         image = self.adb.get_screen()
         sub_image = image[y:y + height, x:x + width]
 
-        score = image_processing.diff_image(template_image, sub_image)
+        score = image_processing.diff_image(template_image, sub_image, color)
 
         logging.debug(f'diff score: {score}')
 
-        return True if score > 0.7 else False
+        return True if score > threshold else False
 
     def find_template(self, template_path:str):
         template_image = cv2.imread(template_path)
@@ -70,6 +70,7 @@ class Action():
             if matched:
                 logging.info('Package is found')
                 self.touch_box(coordinate)
+                time.sleep(3)
                 self.open_cards()
                 return
 
@@ -80,22 +81,25 @@ class Action():
 
         for idx, coordinate in enumerate(coordinates, start=1):
             logging.info(f'Trying to find box {idx} to open')
-            matched = self.match_template(open_template_path, coordinate)
+            matched = self.match_template(open_template_path, coordinate, threshold=0.6)
 
             if matched:
                 logging.info(f'Found box {idx} to open')
                 self.touch_box(coordinate)
+                time.sleep(3)
                 self.open_cards()
                 return
 
             logging.info(f'Trying to find box {idx} to unlock')
-            matched = self.match_template(unlock_template_path, coordinate)
+            matched = self.match_template(unlock_template_path, coordinate, threshold=0.6)
 
             if matched:
                 logging.info(f'Found box {idx} to unlock')
                 self.touch_box(coordinate)
-                time.sleep(5)
-                self.touch(config.start_unlock_loc)
+                time.sleep(3)
+                for loc in config.start_unlock_locs:
+                    self.touch(loc)
+
                 return
 
     def open_cards(self):
@@ -111,7 +115,7 @@ class Action():
                 break
             else:
                 logging.info('Touch center since okay button is not found')
-                self.touch_center(adb)
+                self.touch_center()
 
                 # In case of player upgrade screen
                 logging.info('Touch close location and going back location for player upgrade screen')
