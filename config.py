@@ -10,7 +10,7 @@ box_locs = [
     [559,969,137,153]
 ]
 rewards_loc = [344, 812, 357, 123]
-open_cards_finish_loc = [587, 1148, 117, 123]
+okay_loc = [587, 1148, 117, 123]
 start_unlock_locs = [
     [370, 926],
     [370, 1070]
@@ -19,6 +19,18 @@ close_loc = [640, 260]
 go_back_loc = [30, 1200]
 
 penalty_start_loc = [360, 950]
-penalty_left_corner_loc = [204, 590]
-penalty_center_top_loc = [357, 590]
-penalty_right_corner_loc = [516, 590]
+penalty_left_corner_loc = [204, 600]
+penalty_center_top_loc = [357, 600]
+penalty_right_corner_loc = [516, 600]
+
+arena_loc = [360, 360]
+play_match_loc = [360, 700]
+
+support_loc = [45, 381, 630, 521]
+support_ok_loc = [526, 830]
+
+bid_loc = [50, 880, 619, 181]
+game_end_loc = [587, 1148, 116, 123]
+video_package_cancel_loc = [200, 800]
+my_photo_loc = [128, 20, 93, 112]
+opponent_photo_loc = [498, 20, 93, 112]

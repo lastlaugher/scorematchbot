@@ -36,3 +36,11 @@ def find_template(image: np.ndarray, template: np.ndarray):
         boxes.append([pt[0], pt[1], w, h])
 
     return boxes
+
+def crop(image: np.ndarray, bounding_box: list):
+    x = bounding_box[0]
+    y = bounding_box[1]
+    width = bounding_box[2]
+    height = bounding_box[3]
+
+    return image[y:y + height, x:x + width]

@@ -105,7 +105,7 @@ class Action():
     def open_cards(self):
         while True:
             template_path = 'templates/okay.png'
-            coordinate = config.open_cards_finish_loc
+            coordinate = config.okay_loc
 
             matched = self.match_template(template_path, coordinate)
 
@@ -173,3 +173,79 @@ class Action():
                 time.sleep(5)
 
                 self.open_cards()
+
+
+    def play_game(self):
+        logging.info('Starting game')
+
+        logging.info('Entering arena')
+        self.touch(config.arena_loc)
+        time.sleep(3)
+
+        logging.info('Playing match')
+        self.touch(config.play_match_loc)
+        time.sleep(3)
+
+        logging.info('Finding an opponent')
+        while True:
+            matched = self.match_template('templates/support.png', config.support_loc)
+            if matched:
+                logging.info('Connection failed. Trying again')
+                self.touch(config.support_ok_loc)
+                time.sleep(3)
+
+                logging.info('Playing match')
+                self.touch(config.play_match_loc)
+
+            matched = self.match_template('templates/bid.png', config.bid_loc)
+            if matched:
+                logging.info('Bid stage')
+                time.sleep(5)
+                break
+
+        logging.info('Game starated')
+        prev_image = self.adb.get_screen()
+
+        idx = 0
+        while True:
+            matched = self.match_template('templates/game_end.png', config.game_end_loc)
+            if matched:
+                logging.info('Game ended')
+                self.touch_box(config.game_end_loc)
+                time.sleep(3)
+                break
+
+            cur_image = self.adb.get_screen()
+
+            diff_image = cur_image - prev_image
+            my_photo_diff = image_processing.crop(diff_image, config.my_photo_loc)
+            opponent_photo_diff = image_processing.crop(diff_image, config.opponent_photo_loc)
+
+            if np.sum(my_photo_diff) != 0:
+                logging.info(f'{idx} My turn to kick') 
+                self.kick()
+            elif np.sum(opponent_photo_diff) != 0:
+                logging.info(f'{idx} Opponent\'s turn to kick') 
+            else:
+                logging.info(f'{idx} In-progress')
+
+            cv2.imwrite(f'frames/frame_{idx:05d}.png', diff_image)
+
+            prev_image = cur_image
+            idx += 1
+
+        matched = self.match_template('templates/okay.png')
+        if matched:
+            logging.info('Relagation. Touch okay')
+            self.touch_box(config.okay_loc)
+        else:
+            logging.info('Cancelling video package')
+            self.touch(config.video_package_cancel_loc)
+        time.sleep(3)
+
+        logging.info('Going back to the main screen')
+        self.touch(config.go_back_loc)
+        time.sleep(3)
+
+    def kick(self):
+        logging.info('Implement how to kick')
