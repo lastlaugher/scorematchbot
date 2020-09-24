@@ -80,7 +80,7 @@ def open_box(adb: Adb):
         if matched:
             logging.info(f'Found box {idx} to unlock')
             touch_template(adb, coordinate)
-            time.sleep(3)
+            time.sleep(5)
             touch(adb, config.start_unlock_loc)
             return
 
