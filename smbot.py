@@ -1,18 +1,17 @@
 import time
 import logging
 
-from adb import Adb
-
-import action 
+from action import Action
 
 def main():
     logging.basicConfig(format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=logging.INFO)
-    adb = Adb()
+    action = Action()
 
     while True:
-#        action.match_kick(adb)
-        action.open_package(adb)
-        action.open_box(adb)
+        action.open_rewards()
+        action.open_package()
+        action.open_box()
+#        action.match_kick()
         logging.info('Sleep 5 min in main loop')
         time.sleep(5 * 60)
 
