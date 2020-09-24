@@ -9,7 +9,7 @@ box_locs = [
     [381,969,137,153],
     [559,969,137,153]
 ]
-
+rewards_loc = [344, 812, 357, 123]
 open_cards_finish_loc = [587, 1148, 117, 123]
 start_unlock_loc = [370, 926]
 close_loc = [640, 260]
@@ -19,7 +19,3 @@ penalty_start_loc = [360, 950]
 penalty_left_corner_loc = [204, 582]
 penalty_center_top_loc = [357, 582]
 penalty_right_corner_loc = [516, 582]
-#self.device.input_swipe()
-#Traceback (most recent call last):
-#  File "<string>", line 1, in <module>
-#TypeError: input_swipe() missing 5 required positional arguments: 'start_x', 'start_y', 'end_x', 'end_y', and 'duration'
