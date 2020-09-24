@@ -4,6 +4,7 @@ This is an automated bot for `Score! Match` mobile game. *Implementation is in p
 ## Features
 - [X] Open packages every 4 hours
 - [X] Open boxes whose waiting time is over
+- [ ] Open presents given for every 10 goals
 - [ ] Shoot into the corner in penalty kick/penalty shootout/free kick
 - [ ] Play game
 - [ ] Show status (Bux, Gem, Star, and Arena)
