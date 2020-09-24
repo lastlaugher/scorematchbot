@@ -70,7 +70,7 @@ class Action():
             if matched:
                 logging.info('Package is found')
                 self.touch_box(coordinate)
-                self.open_cards(adb)
+                self.open_cards()
                 return
 
     def open_box(self):
@@ -85,7 +85,7 @@ class Action():
             if matched:
                 logging.info(f'Found box {idx} to open')
                 self.touch_box(coordinate)
-                self.open_cards(adb)
+                self.open_cards()
                 return
 
             logging.info(f'Trying to find box {idx} to unlock')
