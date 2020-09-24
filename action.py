@@ -24,7 +24,7 @@ def match_template(adb:Adb, template_path:str, coordinate:list):
 
     logging.debug(f'diff score: {score}')
 
-    return True if score > 0.75 else False
+    return True if score > 0.7 else False
 
 def touch_template(adb:Adb, coordinate:list):
     x = coordinate[0]
@@ -98,6 +98,12 @@ def open_cards(adb: Adb):
         else:
             logging.info('Touch center since okay button is not found')
             touch_center(adb)
+
+            # In case of player upgrade screen
+            logging.info('Touch close location and going back location for player upgrade screen')
+            touch(adb, config.close_loc)
+            time.sleep(3)
+            touch(adb, config.go_back_loc)
 
         logging.info('Sleep 1 sec')
         time.sleep(1)

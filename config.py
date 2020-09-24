@@ -13,7 +13,7 @@ box_locs = [
 open_cards_finish_loc = [587, 1148, 117, 123]
 start_unlock_loc = [370, 926]
 close_loc = [640, 260]
-back_loc = [30, 1200]
+go_back_loc = [30, 1200]
 
 penalty_start_loc = [360, 950]
 penalty_left_corner_loc = [204, 582]
