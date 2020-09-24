@@ -99,7 +99,8 @@ class Action():
                 time.sleep(3)
                 for loc in config.start_unlock_locs:
                     self.touch(loc)
-
+                time.sleep(3)
+                self.open_cards()
                 return
 
     def open_cards(self):
