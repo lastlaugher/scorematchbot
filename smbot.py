@@ -11,7 +11,6 @@ def main():
         action.open_rewards()
         action.open_package()
         action.open_box()
-#        action.match_kick()
         logging.info('Sleep 5 min in main loop')
         time.sleep(5 * 60)
 
