@@ -75,23 +75,27 @@ class Action():
                 return
 
     def open_box(self):
-        open_template_path = 'templates/open_now.png'
-        unlock_template_path = 'templates/tap_to_unlock.png'
-        coordinates = config.box_locs
+        template_path = 'templates/open_now.png'
+        coordinates = config.open_now_locs
 
         for idx, coordinate in enumerate(coordinates, start=1):
             logging.info(f'Trying to find box {idx} to open')
-            matched = self.match_template(open_template_path, coordinate, threshold=0.7)
+            matched = self.match_template(template_path, coordinate)
 
             if matched:
                 logging.info(f'Found box {idx} to open')
                 self.touch_box(coordinate)
                 time.sleep(3)
                 self.open_cards()
-                return
+                break
 
+    def unlock_box(self):
+        template_path = 'templates/tap_to_unlock.png'
+        coordinates = config.tap_to_unlock_locs
+
+        for idx, coordinate in enumerate(coordinates, start=1):
             logging.info(f'Trying to find box {idx} to unlock')
-            matched = self.match_template(unlock_template_path, coordinate, threshold=0.7)
+            matched = self.match_template(template_path, coordinate)
 
             if matched:
                 logging.info(f'Found box {idx} to unlock')
@@ -100,7 +104,7 @@ class Action():
                 for loc in config.start_unlock_locs:
                     self.touch(loc)
                 time.sleep(3)
-                return
+                break
 
     def open_cards(self):
         while True:

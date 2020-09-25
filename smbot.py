@@ -14,6 +14,7 @@ def main(**kwargs):
         action.open_rewards()
         action.open_package()
         action.open_box()
+        action.unlock_box()
         logging.info('Sleep 5 min in main loop')
         time.sleep(5 * 60)
 
