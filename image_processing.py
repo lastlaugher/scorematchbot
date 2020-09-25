@@ -24,8 +24,8 @@ def find_template(image: np.ndarray, template: np.ndarray):
     template_gray = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
     w, h = template_gray.shape[::-1]
 
-    res = cv2.matchTemplate(image_gray, template_gray, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.6
+    res = cv2.matchTemplate(image_gray, template_gray, cv2.TM_CCOEFF_NORMED, template_gray)
+    threshold = 0.8
     loc = np.where(res >= threshold)
 
     if len(loc[0]) == 0:
