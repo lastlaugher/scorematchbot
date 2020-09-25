@@ -100,7 +100,6 @@ class Action():
                 for loc in config.start_unlock_locs:
                     self.touch(loc)
                 time.sleep(3)
-                self.open_cards()
                 return
 
     def open_cards(self):
@@ -115,15 +114,18 @@ class Action():
                 self.touch_box(coordinate)
                 break
             else:
-                logging.info('Touch center since okay button is not found')
-                self.touch_center()
+                matched = self.match_template('templates/upgrade.png', config.upgrade_loc)
 
-                # In case of player upgrade screen
-                logging.info('Touch close location and going back location for player upgrade screen')
-                self.touch(config.close_loc)
-                time.sleep(3)
-                self.touch(config.go_back_loc)
-
+                if matched:
+                    logging.info('Touch close location and going back location for player upgrade screen')
+                    self.touch(config.close_loc)
+                    time.sleep(3)
+                    self.touch(config.go_back_loc)
+                    break
+                else:
+                    logging.info('Touch center since okay button is not found')
+                    self.touch_center()
+            
             logging.info('Sleep 1 sec')
             time.sleep(1)
 

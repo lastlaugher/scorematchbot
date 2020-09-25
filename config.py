@@ -17,6 +17,7 @@ start_unlock_locs = [
 ]
 close_loc = [640, 260]
 go_back_loc = [30, 1200]
+upgrade_loc = [203, 927, 315, 123]
 
 penalty_start_loc = [360, 950]
 penalty_left_corner_loc = [204, 600]
