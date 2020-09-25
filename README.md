@@ -23,6 +23,8 @@ This is an automated bot for `Score! Match` mobile game. *Implementation is in p
 - Install the downloaded APK in Memu
 ### smbot
 - Download this code repository and unzip
+### (Optional) Facebook app
+- If you need to share your account between Memu emulator and your phone, Facebook app is needed to keep your account logged in
 
 ## Usage
 1. Run `Score! Match` application in Menu
