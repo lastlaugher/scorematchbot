@@ -117,7 +117,7 @@ class Action():
                 matched = self.match_template('templates/upgrade.png', config.upgrade_loc)
 
                 if matched:
-                    logging.info('Touch close location and going back location for player upgrade screen')
+                    logging.info('Player upgrade screen showed. Touch close location and going back')
                     self.touch(config.close_loc)
                     time.sleep(3)
                     self.touch(config.go_back_loc)
