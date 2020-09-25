@@ -25,10 +25,10 @@ def find_template(image: np.ndarray, template: np.ndarray):
     w, h = template_gray.shape[::-1]
 
     res = cv2.matchTemplate(image_gray, template_gray, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.8
+    threshold = 0.6
     loc = np.where(res >= threshold)
 
-    if len(loc) == 0:
+    if len(loc[0]) == 0:
         return []
 
     boxes = []

@@ -81,7 +81,7 @@ class Action():
 
         for idx, coordinate in enumerate(coordinates, start=1):
             logging.info(f'Trying to find box {idx} to open')
-            matched = self.match_template(open_template_path, coordinate, threshold=0.6)
+            matched = self.match_template(open_template_path, coordinate, threshold=0.7)
 
             if matched:
                 logging.info(f'Found box {idx} to open')
@@ -91,7 +91,7 @@ class Action():
                 return
 
             logging.info(f'Trying to find box {idx} to unlock')
-            matched = self.match_template(unlock_template_path, coordinate, threshold=0.6)
+            matched = self.match_template(unlock_template_path, coordinate, threshold=0.7)
 
             if matched:
                 logging.info(f'Found box {idx} to unlock')
@@ -159,24 +159,23 @@ class Action():
         coordinate = config.rewards_loc
         logging.info('Trying to find rewards')
 
-        matched = self.match_template(template_path, coordinate)
+        matched = self.match_template(template_path, coordinate, threshold=0.7)
 
         if matched:
             logging.info('Reword box is found')
             self.touch_box(coordinate)
 
-            logging.info('Trying to find rewards location')
+            logging.info('Trying to find reward locations')
             locations = self.find_template('templates/found.png')
             logging.info(f'Found {len(locations)} locations')
 
-            for loc in locations:
-                self.touch_box(loc)
+            if len(locations) > 0:
+                self.touch_box(locations[0])
 
                 logging.info('Tapped rewards')
                 time.sleep(5)
 
                 self.open_cards()
-
 
     def play_game(self):
         logging.info('Starting game')
