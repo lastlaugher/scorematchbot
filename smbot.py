@@ -1,10 +1,13 @@
 import time
 import logging
+import argparse
 
 from action import Action
 
-def main():
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=logging.INFO)
+def main(**kwargs):
+    log_level = getattr(logging, kwargs['log'].upper())
+    logging.basicConfig(format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=log_level)
+
     action = Action()
 
     while True:
@@ -15,4 +18,7 @@ def main():
         time.sleep(5 * 60)
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log', default='info', help='Log level (CRITICAL, ERROR, WARNING, INFO, and DEBUG)')
+    args = parser.parse_args()
+    main(**vars(args))

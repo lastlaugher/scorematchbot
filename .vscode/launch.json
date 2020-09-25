@@ -9,6 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "smbot.py",
+            "args": ["--log", "debug"],
             "console": "integratedTerminal"
         }
     ]
