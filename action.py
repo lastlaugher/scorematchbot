@@ -245,8 +245,19 @@ class Action():
             logging.info('Relagation. Touch okay')
             self.touch_box(config.okay_loc)
         else:
-            logging.info('Cancelling video package')
-            self.touch(config.video_package_cancel_loc)
+            logging.info('Accepting video package')
+            self.touch(config.video_package_play_loc)
+
+            logging.info('Playing video')
+            time.sleep(60)
+            
+            logging.info('Finished playing video')
+            self.touch(config.video_package_close_loc)
+            time.sleep(3)
+
+            logging.info('Opening cards')
+            self.open_cards()
+
         time.sleep(3)
 
         logging.info('Going back to the main screen')
