@@ -24,7 +24,7 @@ class Action():
         image = self.adb.get_screen()
         sub_image = image[y:y + height, x:x + width]
 
-        score = image_processing.diff_image(template_image, sub_image, color)
+        score = image_processing.diff_image(template_image, sub_image, color=color)
 
         logging.debug(f'diff score: {score}')
 
