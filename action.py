@@ -25,10 +25,9 @@ class Action():
         sub_image = image[y:y + height, x:x + width]
 
         score = image_processing.diff_image(template_image, sub_image, color=color)
-
         logging.debug(f'diff score: {score}')
 
-        return True if score > threshold else False
+        return (True, score) if score > threshold else (False, score)
 
     def find_template(self, template_path:str):
         template_image = cv2.imread(template_path)
@@ -65,10 +64,10 @@ class Action():
                 coordinate = config.package_small_loc
                 logging.info('Trying to find small package')
 
-            matched = self.match_template(template_path, coordinate)
+            matched, score = self.match_template(template_path, coordinate)
 
             if matched:
-                logging.info('Package is found')
+                logging.info(f'Package is found ({score})')
                 self.touch_box(coordinate)
                 time.sleep(3)
                 self.open_cards()
@@ -80,10 +79,10 @@ class Action():
 
         for idx, coordinate in enumerate(coordinates, start=1):
             logging.info(f'Trying to find box {idx} to open')
-            matched = self.match_template(template_path, coordinate)
+            matched, score = self.match_template(template_path, coordinate)
 
             if matched:
-                logging.info(f'Found box {idx} to open')
+                logging.info(f'Found box {idx} to open ({score})')
                 self.touch_box(coordinate)
                 time.sleep(3)
                 self.open_cards()
@@ -95,10 +94,10 @@ class Action():
 
         for idx, coordinate in enumerate(coordinates, start=1):
             logging.info(f'Trying to find box {idx} to unlock')
-            matched = self.match_template(template_path, coordinate)
+            matched, score = self.match_template(template_path, coordinate)
 
             if matched:
-                logging.info(f'Found box {idx} to unlock')
+                logging.info(f'Found box {idx} to unlock ({score})')
                 self.touch_box(coordinate)
                 time.sleep(3)
                 for loc in config.start_unlock_locs:
@@ -111,17 +110,17 @@ class Action():
             template_path = 'templates/okay.png'
             coordinate = config.okay_loc
 
-            matched = self.match_template(template_path, coordinate)
+            matched, score = self.match_template(template_path, coordinate)
 
             if matched:
-                logging.info('Found okay button to finish opening cards')
+                logging.info(f'Found okay button to finish opening cards ({score})')
                 self.touch_box(coordinate)
                 break
             else:
-                matched = self.match_template('templates/upgrade.png', config.upgrade_loc)
+                matched, score = self.match_template('templates/upgrade.png', config.upgrade_loc)
 
                 if matched:
-                    logging.info('Player upgrade screen showed. Touch close location and going back')
+                    logging.info(f'Player upgrade screen showed. Touch close location and going back ({score})')
                     self.touch(config.close_loc)
                     time.sleep(3)
                     self.touch(config.go_back_loc)
@@ -163,10 +162,10 @@ class Action():
         coordinate = config.rewards_loc
         logging.info('Trying to find rewards')
 
-        matched = self.match_template(template_path, coordinate, threshold=0.7)
+        matched, score = self.match_template(template_path, coordinate, threshold=0.7)
 
         if matched:
-            logging.info('Reword box is found')
+            logging.info(f'Reword box is found ({score})')
             self.touch_box(coordinate)
 
             logging.info('Trying to find reward locations')
