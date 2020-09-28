@@ -130,6 +130,7 @@ class Action():
         if self.sign_in():
             return
 
+        idx = 0
         while True:
             template_path = 'templates/okay.png'
             coordinate = config.okay_loc
@@ -161,6 +162,12 @@ class Action():
             
             logging.info('Sleep 1 sec')
             time.sleep(1)
+
+            idx += 1
+
+            if idx > 50:
+                logging.error('Can\'t find the okay button during 50 iterations. Stop the infinite loop.')
+                break
 
     def match_kick(self):
         template_image = cv2.imread('templates/kick.png')
