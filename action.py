@@ -115,7 +115,7 @@ class Action():
 
         for idx, coordinate in enumerate(coordinates, start=1):
             logging.info(f'Trying to find box {idx} to unlock')
-            matched, score = self.match_template(template_path, coordinate)
+            matched, score = self.match_template(template_path, coordinate, threshold=0.7)
 
             if matched:
                 logging.info(f'Found box {idx} to unlock ({score})')
@@ -230,34 +230,49 @@ class Action():
 
         logging.info('Finding an opponent')
         while True:
-            matched = self.match_template('templates/support.png', config.support_loc)
+            matched, score = self.match_template('templates/support.png', config.support_loc)
             if matched:
-                logging.info('Connection failed. Trying again')
+                logging.info(f'Connection failed. Trying again ({score})')
                 self.touch(config.support_ok_loc)
                 time.sleep(3)
 
                 logging.info('Playing match')
                 self.touch(config.play_match_loc)
 
-            matched = self.match_template('templates/bid.png', config.bid_loc)
+            matched, score = self.match_template('templates/bid.png', config.bid_loc)
             if matched:
-                logging.info('Bid stage')
+                logging.info(f'Bid stage (score)')
                 time.sleep(5)
                 break
 
         logging.info('Game starated')
-        prev_image = self.adb.get_screen()
-
+        prev_image = self.adb.get_screen(color=False)
+        photo_loc = [
+            0, 
+            0,
+            prev_image.shape[1],
+            config.my_photo_loc[1] + config.my_photo_loc[3]
+            ]
+            
+        prev_image = prev_image[
+            photo_loc[1]:photo_loc[1] + photo_loc[3],
+            photo_loc[0]:photo_loc[0] + photo_loc[2]
+        ]
         idx = 0
         while True:
-            matched = self.match_template('templates/game_end.png', config.game_end_loc)
+            matched, score = self.match_template('templates/game_end.png', config.game_end_loc)
             if matched:
-                logging.info('Game ended')
+                logging.info(f'Game ended ({score})')
                 self.touch_box(config.game_end_loc)
                 time.sleep(3)
                 break
 
-            cur_image = self.adb.get_screen()
+            image = self.adb.get_screen(color=False)
+
+            cur_image = image[
+                photo_loc[1]:photo_loc[1] + photo_loc[3],
+                photo_loc[0]:photo_loc[0] + photo_loc[2]
+            ]
 
             diff_image = cur_image - prev_image
             my_photo_diff = image_processing.crop(diff_image, config.my_photo_loc)
@@ -276,9 +291,9 @@ class Action():
             prev_image = cur_image
             idx += 1
 
-        matched = self.match_template('templates/okay.png')
+        matched, score = self.match_template('templates/okay.png', config.okay_loc)
         if matched:
-            logging.info('Relagation. Touch okay')
+            logging.info('Relagation. Touch okay ({score})')
             self.touch_box(config.okay_loc)
         else:
             logging.info('Accepting video package')
@@ -289,6 +304,7 @@ class Action():
             
             logging.info('Finished playing video')
             self.touch(config.video_package_close_loc)
+            self.touch(config.free_collect_end_loc)
             time.sleep(3)
 
             logging.info('Opening cards')
@@ -313,3 +329,33 @@ class Action():
 
     def kick(self):
         logging.info('Implement how to kick')
+
+
+    def test(self):
+        import glob
+        #for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
+        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
+            template_image = cv2.imread('templates/kick.png', cv2.IMREAD_GRAYSCALE)
+            image = cv2.imread(file, cv2.IMREAD_GRAYSCALE)
+
+            total_pixel = 0
+            match_pixel = 0
+            for h in range(template_image.shape[0]):
+                for w in range(template_image.shape[1]):
+                    if template_image[h, w] > 0:
+                        local_maximum = True
+                        for m in range(-1, 1):
+                            for n in range(-1, 1):
+                                if template_image[h + m, w + n] > 0:
+                                    continue 
+
+                                if image[h, w] < image[h + m, w + n]:
+                                    local_maximum = False
+
+                        if local_maximum:
+                            match_pixel += 1
+                        total_pixel += 1
+
+            logging.info(f'{file} diff score: {match_pixel / total_pixel}')
+   
+   
