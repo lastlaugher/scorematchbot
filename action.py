@@ -33,11 +33,10 @@ class Action():
         template_image = cv2.imread(template_path)
         image = self.adb.get_screen()
 
-        locations = image_processing.find_template(image, template_image)
+        location = image_processing.find_template(image, template_image)
+        logging.debug(f'Reward location {location}')
 
-        logging.debug(f'Found locations: {locations}')
-
-        return locations
+        return location
 
     def touch_box(self, coordinate:list):
         x = coordinate[0]
@@ -192,11 +191,11 @@ class Action():
             self.touch_box(coordinate)
 
             logging.info('Trying to find reward locations')
-            locations = self.find_template('templates/found.png')
-            logging.info(f'Found {len(locations)} locations')
+            location = self.find_template('templates/found.png')
 
-            if len(locations) > 0:
-                self.touch_box(locations[0])
+            if location:
+                logging.info('Found reward location')
+                self.touch_box(location)
 
                 logging.info('Tapped rewards')
                 time.sleep(5)

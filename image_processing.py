@@ -24,18 +24,14 @@ def find_template(image: np.ndarray, template: np.ndarray):
     template_gray = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
     w, h = template_gray.shape[::-1]
 
-    res = cv2.matchTemplate(image_gray, template_gray, cv2.TM_CCOEFF_NORMED, template_gray)
+    res = cv2.matchTemplate(image_gray, template_gray, cv2.TM_CCORR_NORMED, template_gray)
+    _, max_val, _,  max_loc = cv2.minMaxLoc(res)
+
     threshold = 0.8
-    loc = np.where(res >= threshold)
+    if max_val < threshold:
+        return None
 
-    if len(loc[0]) == 0:
-        return []
-
-    boxes = []
-    for pt in zip(*loc[::-1]):
-        boxes.append([pt[0], pt[1], w, h])
-
-    return boxes
+    return [max_loc[0], max_loc[1], w, h]
 
 def crop(image: np.ndarray, bounding_box: list):
     x = bounding_box[0]
