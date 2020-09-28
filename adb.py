@@ -12,9 +12,13 @@ class Adb():
 
         self.device = devices[0]
 
-    def get_screen(self):
+    def get_screen(self, color: bool = True):
         buffer = np.frombuffer(self.device.screencap(), dtype='uint8')
-        img = cv2.imdecode(buffer, cv2.IMREAD_COLOR)
+
+        if color:
+            img = cv2.imdecode(buffer, cv2.IMREAD_COLOR)
+        else:
+            img = cv2.imdecode(buffer, cv2.IMREAD_GRAYSCALE)
         
         return img
 
