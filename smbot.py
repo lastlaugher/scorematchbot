@@ -6,7 +6,14 @@ from action import Action
 
 def main(**kwargs):
     log_level = getattr(logging, kwargs['log'].upper())
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=log_level)
+    format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+    logFormatter = logging.Formatter(format)
+    logging.basicConfig(format=format, level=log_level)
+
+    fileHandler = logging.FileHandler('smbot.log')
+    fileHandler.setFormatter(logFormatter)
+    fileHandler.setLevel(log_level)
+    logging.getLogger().addHandler(fileHandler)
 
     action = Action()
 
