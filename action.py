@@ -185,7 +185,7 @@ class Action():
         end_x = locations[loc][0]
         end_y = locations[loc][1]
 
-        self.adb.swipe(start_x, start_y, end_x, end_y, 300)
+        self.adb.swipe(start_x, start_y, end_x, end_y, 200)
 
     def open_rewards(self):
         template_path = 'templates/claim_rewards.png'
