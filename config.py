@@ -18,7 +18,7 @@ open_now_locs = [
     [559,1089,137,33]
 ]
 
-rewards_loc = [344, 812, 357, 123]
+rewards_loc = [415, 830, 215, 78]
 okay_loc = [587, 1148, 117, 123]
 start_unlock_locs = [
     [370, 926],

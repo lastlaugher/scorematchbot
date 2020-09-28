@@ -192,7 +192,7 @@ class Action():
         coordinate = config.rewards_loc
         logging.info('Trying to find rewards')
 
-        matched, score = self.match_template(template_path, coordinate, threshold=0.7)
+        matched, score = self.match_template(template_path, coordinate, mask_path=template_path)
 
         if matched:
             logging.info(f'Reword box is found ({score})')
