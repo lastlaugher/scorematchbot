@@ -54,6 +54,26 @@ class Action():
         self.adb.touch(coordinate[0], coordinate[1])
 
     def open_package(self):
+        template_path = 'templates/free_collect.png'
+        coordinate = config.free_collect_loc
+        logging.info('Trying to find free collect package')
+        matched, score = self.match_template(template_path, coordinate)
+        if matched:
+            logging.info(f'Free collect package is found ({score})')
+            self.touch_box(coordinate)
+
+            logging.info('Playing video')
+            time.sleep(60)
+            
+            logging.info('Finished playing video')
+            self.touch(config.free_collect_end_loc)
+            time.sleep(3)
+
+            logging.info('Opening cards')
+            self.open_cards()
+
+            return
+
         for idx in range(2):
             if idx == 0:
                 template_path = 'templates/free_package_open_now.png'

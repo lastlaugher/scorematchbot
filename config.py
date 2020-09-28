@@ -3,6 +3,8 @@ screen_size = [1280, 720]
 # x, y, width, height
 package_loc = [24,812,274,124]
 package_small_loc = [24,812,115,123]
+free_collect_loc = [182,812,115,123]
+free_collect_end_loc = [672,48]
 tap_to_unlock_locs = [
     [24,969,137,25],
     [203,969,137,25],
