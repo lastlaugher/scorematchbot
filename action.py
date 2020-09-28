@@ -133,23 +133,29 @@ class Action():
             coordinate = config.okay_loc
 
             matched, score = self.match_template(template_path, coordinate)
-
             if matched:
                 logging.info(f'Found okay button to finish opening cards ({score})')
                 self.touch_box(coordinate)
                 break
-            else:
-                matched, score = self.match_template('templates/upgrade.png', config.upgrade_loc)
 
-                if matched:
-                    logging.info(f'Player upgrade screen showed. Touch close location and going back ({score})')
-                    self.touch(config.close_loc)
-                    time.sleep(3)
-                    self.touch(config.go_back_loc)
-                    break
-                else:
-                    logging.info('Touch center since okay button is not found')
-                    self.touch_center()
+            matched, score = self.match_template('templates/upgrade.png', config.upgrade_loc)
+            if matched:
+                logging.info(f'Player upgrade screen showed. Touch close location and going back ({score})')
+                self.touch(config.close_loc)
+                time.sleep(3)
+                self.touch(config.go_back_loc)
+                break
+
+            matched, score = self.match_template('templates/formation.png', config.formation_loc)
+            if matched:
+                logging.info(f'Formation screen showed. Touch ok location and going back ({score})')
+                self.touch(config.formation_ok_loc)
+                time.sleep(3)
+                self.touch(config.go_back_loc)
+                break
+
+            logging.info('Touch center since okay button is not found')
+            self.touch_center()
             
             logging.info('Sleep 1 sec')
             time.sleep(1)
