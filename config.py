@@ -44,3 +44,6 @@ video_package_play_loc = [530, 800]
 video_package_close_loc = [48, 48]
 my_photo_loc = [128, 20, 93, 112]
 opponent_photo_loc = [498, 20, 93, 112]
+
+signed_out_loc = [70, 510, 577, 73]
+sign_in_loc = [360, 830]

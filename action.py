@@ -106,6 +106,9 @@ class Action():
                 break
 
     def open_cards(self):
+        if self.sign_in():
+            return
+
         while True:
             template_path = 'templates/okay.png'
             coordinate = config.okay_loc
@@ -262,6 +265,17 @@ class Action():
         logging.info('Going back to the main screen')
         self.touch(config.go_back_loc)
         time.sleep(3)
+
+    def sign_in(self):
+        logging.info('Trying to find signed-out screen')
+        matched, score = self.match_template('templates/signed_out.png', config.signed_out_loc)
+        if matched:
+            logging.info('Found signed-out page')
+            self.touch(config.sign_in_loc)
+            time.sleep(10)
+            return True
+
+        return False            
 
     def kick(self):
         logging.info('Implement how to kick')
