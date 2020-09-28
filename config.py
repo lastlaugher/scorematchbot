@@ -33,7 +33,7 @@ formation_ok_loc = [370, 940]
 penalty_start_loc = [360, 950]
 penalty_left_corner_loc = [204, 600]
 penalty_center_top_loc = [357, 600]
-penalty_right_corner_loc = [516, 600]
+penalty_right_corner_loc = [514, 600]
 
 arena_loc = [360, 360]
 play_match_loc = [360, 700]

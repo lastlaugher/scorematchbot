@@ -13,8 +13,9 @@ class Action():
     def __init__(self):
         self.adb = Adb()
 
-    def match_template(self, template_path:str, coordinate:list, threshold:float = 0.8, color:bool = True):
+    def match_template(self, template_path:str, coordinate:list, threshold:float = 0.8, color:bool = True, mask_path:str = None):
         template_image = cv2.imread(template_path)
+        mask_image = cv2.imread(template_path) if mask_path else None
 
         x = coordinate[0]
         y = coordinate[1]
@@ -24,7 +25,7 @@ class Action():
         image = self.adb.get_screen()
         sub_image = image[y:y + height, x:x + width]
 
-        score = image_processing.diff_image(template_image, sub_image, color=color)
+        score = image_processing.diff_image(template_image, sub_image, mask=mask_image, color=color)
         logging.debug(f'diff score: {score}')
 
         return (True, score) if score > threshold else (False, score)
@@ -56,16 +57,17 @@ class Action():
         template_path = 'templates/free_collect.png'
         coordinate = config.free_collect_loc
         logging.info('Trying to find free collect package')
-        matched, score = self.match_template(template_path, coordinate)
+        matched, score = self.match_template(template_path, coordinate, mask_path=template_path)
         if matched:
             logging.info(f'Free collect package is found ({score})')
             self.touch_box(coordinate)
 
             logging.info('Playing video')
-            time.sleep(60)
+            time.sleep(40)
             
             logging.info('Finished playing video')
             self.touch(config.free_collect_end_loc)
+            self.touch(config.video_package_close_loc)
             time.sleep(3)
 
             logging.info('Opening cards')
@@ -183,7 +185,7 @@ class Action():
         end_x = locations[loc][0]
         end_y = locations[loc][1]
 
-        self.adb.swipe(start_x, start_y, end_x, end_y, 500)
+        self.adb.swipe(start_x, start_y, end_x, end_y, 300)
 
     def open_rewards(self):
         template_path = 'templates/claim_rewards.png'

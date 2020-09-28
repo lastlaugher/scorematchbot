@@ -1,0 +1,16 @@
+test status
+
+large package v
+small package v (0.89)
+free collect v (1.0)
+open rewards v (0.85)
+open rewards template v (0.84)
+
+open1 v (0.86)
+open2
+open3
+open4
+unlock1 v (0.83)
+unlock2
+unlock3 v (1.0)
+unlock4
