@@ -42,8 +42,11 @@ def launch():
                 logging.warning(f'Please run the {name} manually')
                 continue
             
+
+            logging.info('Executed Score! Match app')
             client = adb.Adb()
             client.run_app()
+            time.sleep(5)
 
         else:
             logging.warning(f'{name} is not installed')
