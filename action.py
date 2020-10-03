@@ -73,8 +73,6 @@ class Action():
             logging.info('Opening cards')
             self.open_cards()
 
-            return
-
         for idx in range(2):
             if idx == 0:
                 template_path = 'templates/free_package_open_now.png'
@@ -204,6 +202,7 @@ class Action():
         if matched:
             logging.info(f'Reword box is found ({score})')
             self.touch_box(coordinate)
+            time.sleep(3)
 
             logging.info('Trying to find reward locations')
             location = self.find_template('templates/found.png')
@@ -359,3 +358,45 @@ class Action():
             logging.info(f'{file} diff score: {match_pixel / total_pixel}')
    
    
+    def test2(self):
+        #my_uniform_loc = [245, 45, 30, 20]
+        #opponent_uniform_loc = [446, 45, 30, 20]
+        my_uniform_loc = [238, 45, 45, 11]
+        opponent_uniform_loc = [439, 45, 45, 11]
+
+        # sensitivity < 20 : non color
+        # preprocessing linear transfrom
+        # v: 0-255 => 180-255
+        # 0-179: original hue, 180-255: non-color
+
+        # uniform mask needed
+
+
+        import glob
+        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
+        #for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
+            image = cv2.imread(file)
+            image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+            # extract only H plane
+            my_uniform = image_processing.crop(image, my_uniform_loc)[:,:,:]
+            opponent_uniform = image_processing.crop(image, opponent_uniform_loc)[:,:,:]
+
+            my_values, my_counts = np.unique(my_uniform, return_counts=True)
+            print(my_values, my_counts)
+            opponent_values, opponent_counts = np.unique(opponent_uniform, return_counts=True)
+
+            uniform_pixels = my_uniform_loc[2] * my_uniform_loc[3]
+
+            my_uniform_values = []
+            opponent_uniform_values = []
+            for v, c in zip(my_values, my_counts):
+                if c / uniform_pixels > 0.2:
+                    my_uniform_values.append(v)
+
+            for v, c in zip(opponent_values, opponent_counts):
+                if c / uniform_pixels > 0.2:
+                    opponent_uniform_values.append(v)
+
+            logging.info(f'my uniform color: {",".join(map(str, my_uniform_values))}')
+            logging.info(f'opponent uniform color: {",".join(map(str, opponent_uniform_values))}')
