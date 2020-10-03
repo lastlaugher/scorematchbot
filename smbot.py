@@ -3,6 +3,7 @@ import logging
 import argparse
 
 from action import Action
+import emulator
 
 def main(**kwargs):
     log_level = getattr(logging, kwargs['log'].upper())
@@ -15,6 +16,7 @@ def main(**kwargs):
     fileHandler.setLevel(log_level)
     logging.getLogger().addHandler(fileHandler)
 
+    emulator.launch()
     action = Action()
 
     while True:

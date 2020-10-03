@@ -27,5 +27,7 @@ class Adb():
         
     def swipe(self, start_x, start_y, end_x, end_y, duration):
         self.device.input_swipe(start_x, start_y, end_x, end_y, duration)
-        
+
+    def run_app(self):
+        self.device.shell('monkey -p com.firsttouchgames.smp -c android.intent.category.LAUNCHER 1')
         
