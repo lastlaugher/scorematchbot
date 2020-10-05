@@ -319,7 +319,7 @@ class Action():
         logging.info('Trying to find signed-out screen')
         matched, score = self.match_template('templates/signed_out.png', config.signed_out_loc)
         if matched:
-            logging.info('Found signed-out page')
+            logging.info('Found signed-out message. Trying to sign-in')
             self.touch(config.sign_in_loc)
             time.sleep(10)
             return True
@@ -357,46 +357,76 @@ class Action():
 
             logging.info(f'{file} diff score: {match_pixel / total_pixel}')
    
-   
+
+    def estimate_uniform_colors(self, image_hsv, uniform_loc):
+        uniform_eh = image_processing.hsv2eh(image_processing.crop(image_hsv, uniform_loc))
+        uniform_mask = cv2.imread('templates/uniform_mask.png', cv2.IMREAD_GRAYSCALE)
+
+        uniform_masked = np.ma.masked_array(uniform_eh, uniform_mask == 0)
+        values, counts = np.unique(uniform_masked.astype('uint16'), return_counts=True)
+
+        uniform_pixels = np.count_nonzero(uniform_mask)
+
+        uniform_values = []
+        for v, c in zip(values, counts):
+            if type(v) == np.ma.core.MaskedConstant:
+                continue
+
+            if c / uniform_pixels > 0.2:
+                uniform_values.append(v)
+
+        return uniform_values
+
+    def get_player_locations(self, image_eh, uniform_colors):
+        mask = np.zeros(image_eh.shape, np.uint8)
+        for color in uniform_colors:
+            if color < 180:
+                if color >= 178:
+                    upper_margin = 179 - color 
+                else:
+                    upper_margin = 2
+
+                if color <= 1:
+                    lower_margin = color 
+                else:
+                    lower_margin = 2
+            else:
+                if color >= 251:
+                    upper_margin = 255 - color
+                else:
+                    upper_margin = 5
+
+                if color <= 184:
+                    lower_margin = color - 180
+                else:
+                    lower_margin = 5
+
+            cur_mask = cv2.inRange(image_eh, np.array(color - lower_margin, dtype=np.uint16), np.array(color + upper_margin, dtype=np.uint16))
+            mask = cv2.bitwise_or(mask, cur_mask)
+
+        return mask
+
     def test2(self):
-        #my_uniform_loc = [245, 45, 30, 20]
-        #opponent_uniform_loc = [446, 45, 30, 20]
-        my_uniform_loc = [238, 45, 45, 11]
-        opponent_uniform_loc = [439, 45, 45, 11]
-
-        # sensitivity < 20 : non color
-        # preprocessing linear transfrom
-        # v: 0-255 => 180-255
-        # 0-179: original hue, 180-255: non-color
-
-        # uniform mask needed
-
-
         import glob
         for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
         #for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
             image = cv2.imread(file)
             image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+            image_eh = image_processing.hsv2eh(image_hsv)
 
-            # extract only H plane
-            my_uniform = image_processing.crop(image, my_uniform_loc)[:,:,:]
-            opponent_uniform = image_processing.crop(image, opponent_uniform_loc)[:,:,:]
+            my_uniform_colors = self.estimate_uniform_colors(image_hsv, config.my_uniform_loc)
+            opponent_uniform_colors = self.estimate_uniform_colors(image_hsv, config.opponent_uniform_loc)
 
-            my_values, my_counts = np.unique(my_uniform, return_counts=True)
-            print(my_values, my_counts)
-            opponent_values, opponent_counts = np.unique(opponent_uniform, return_counts=True)
+            logging.info(f'my uniform color: {",".join(map(str, my_uniform_colors))}')
+            logging.info(f'opponent uniform color: {",".join(map(str, opponent_uniform_colors))}')
 
-            uniform_pixels = my_uniform_loc[2] * my_uniform_loc[3]
 
-            my_uniform_values = []
-            opponent_uniform_values = []
-            for v, c in zip(my_values, my_counts):
-                if c / uniform_pixels > 0.2:
-                    my_uniform_values.append(v)
+            my_mask = self.get_player_locations(image_eh, my_uniform_colors)
+            opponent_mask = self.get_player_locations(image_eh, opponent_uniform_colors)
 
-            for v, c in zip(opponent_values, opponent_counts):
-                if c / uniform_pixels > 0.2:
-                    opponent_uniform_values.append(v)
+            cv2.imshow('frame', image)
+            cv2.imshow('my', my_mask)
+            cv2.imshow('op', opponent_mask)
+            cv2.waitKey(0)
 
-            logging.info(f'my uniform color: {",".join(map(str, my_uniform_values))}')
-            logging.info(f'opponent uniform color: {",".join(map(str, opponent_uniform_values))}')
+

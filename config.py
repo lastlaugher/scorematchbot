@@ -51,3 +51,6 @@ opponent_photo_loc = [498, 20, 93, 112]
 
 signed_out_loc = [70, 510, 577, 73]
 sign_in_loc = [360, 830]
+
+my_uniform_loc = [236, 36, 48, 57]
+opponent_uniform_loc = [437, 36, 48, 57]

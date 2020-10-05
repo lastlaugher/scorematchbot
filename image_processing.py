@@ -40,3 +40,19 @@ def crop(image: np.ndarray, bounding_box: list):
     height = bounding_box[3]
 
     return image[y:y + height, x:x + width]
+
+def hsv2eh(image: np.ndarray):
+    '''
+    Convert HSV image into EH (Extended Hue) image, which non-colors are considered such as white, gray, and black
+    EH plane value
+    0-179: original H
+    180-255: linear transformed value from V(0-255) if S < 20
+    '''
+
+    eh = image[:,:,0]
+    for h in range(eh.shape[0]):
+        for w in range(eh.shape[1]):
+            if image[h, w, 1] < 20:
+                eh[h, w] = int(image[h, w, 2] / 255 * (255 - 180)) + 180 
+
+    return eh
