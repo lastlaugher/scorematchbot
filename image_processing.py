@@ -48,11 +48,9 @@ def hsv2eh(image: np.ndarray):
     0-179: original H
     180-255: linear transformed value from V(0-255) if S < 20
     '''
-
     eh = image[:,:,0]
-    for h in range(eh.shape[0]):
-        for w in range(eh.shape[1]):
-            if image[h, w, 1] < 20:
-                eh[h, w] = int(image[h, w, 2] / 255 * (255 - 180)) + 180 
+
+    for y, x in zip(*np.where(image[:, :, 1] < 20)):
+        eh[y, x] = int(image[y, x, 2] / 255 * (255 - 180)) + 180 
 
     return eh
