@@ -105,7 +105,6 @@ class Action():
                 self.touch_box(coordinate)
                 time.sleep(3)
                 self.open_cards()
-                break
 
     def unlock_box(self):
         template_path = 'templates/tap_to_unlock.png'
