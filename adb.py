@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
+import logging
+import time
 
 from ppadb.client import Client as AdbClient
+import config
 
 class Adb():
     def __init__(self):
@@ -13,13 +16,23 @@ class Adb():
         self.device = devices[0]
 
     def get_screen(self, color: bool = True):
-        buffer = np.frombuffer(self.device.screencap(), dtype='uint8')
+        dim = config.screen_size
 
-        if color:
-            img = cv2.imdecode(buffer, cv2.IMREAD_COLOR)
-        else:
-            img = cv2.imdecode(buffer, cv2.IMREAD_GRAYSCALE)
-        
+        for idx in range(10):
+            buffer = np.frombuffer(self.device.screencap(), dtype='uint8')
+
+            if color:
+                img = cv2.imdecode(buffer, cv2.IMREAD_COLOR)
+            else:
+                img = cv2.imdecode(buffer, cv2.IMREAD_GRAYSCALE)
+ 
+            if dim == list(img.shape[0:2]):
+                break
+
+            logging.warning('Score! Match app is not active. Trying to run the app')
+            self.run_app()
+            time.sleep(5)
+       
         return img
 
     def touch(self, x, y):
