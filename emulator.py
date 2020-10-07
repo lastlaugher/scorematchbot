@@ -45,7 +45,7 @@ def launch():
 
             logging.info('Executed Score! Match app')
             client = adb.Adb()
-            client.run_app()
+            client.start_app()
             time.sleep(5)
 
         else:

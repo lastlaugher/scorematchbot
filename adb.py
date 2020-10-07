@@ -14,6 +14,7 @@ class Adb():
             raise Exception('There is no ADB devices')
 
         self.device = devices[0]
+        self.app_name = 'com.firsttouchgames.smp'
 
     def get_screen(self, color: bool = True):
         dim = config.screen_size
@@ -30,7 +31,7 @@ class Adb():
                 break
 
             logging.warning('Score! Match app is not active. Trying to run the app')
-            self.run_app()
+            self.start_app()
             time.sleep(5)
        
         return img
@@ -41,6 +42,13 @@ class Adb():
     def swipe(self, start_x, start_y, end_x, end_y, duration):
         self.device.input_swipe(start_x, start_y, end_x, end_y, duration)
 
-    def run_app(self):
-        self.device.shell('monkey -p com.firsttouchgames.smp -c android.intent.category.LAUNCHER 1')
+    def start_app(self):
+        self.device.shell(f'monkey -p {self.app_name} -c android.intent.category.LAUNCHER 1')
         
+    def stop_app(self):
+        self.device.shell(f'am force-stop {self.app_name}')
+        
+    def restart_app(self):
+        self.stop_app()
+        time.sleep(5)
+        self.start_app()

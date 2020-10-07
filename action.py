@@ -162,8 +162,10 @@ class Action():
 
             idx += 1
 
-            if idx > 50:
-                logging.error('Can\'t find the okay button during 50 iterations. Stop the infinite loop.')
+            if idx > 30:
+                logging.error('Can\'t find the okay button during 30 iterations')
+                self.adb.restart_app()
+                logging.info('App is restarted')
                 break
 
     def match_kick(self):
