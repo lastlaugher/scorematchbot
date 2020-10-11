@@ -17,13 +17,15 @@ class Action():
         template_image = cv2.imread(template_path)
         mask_image = cv2.imread(template_path) if mask_path else None
 
-        x = coordinate[0]
-        y = coordinate[1]
-        width  = coordinate[2]
-        height = coordinate[3]
-
         image = self.adb.get_screen()
-        sub_image = image[y:y + height, x:x + width]
+        if coordinate:
+            x = coordinate[0]
+            y = coordinate[1]
+            width  = coordinate[2]
+            height = coordinate[3]
+            sub_image = image[y:y + height, x:x + width]
+        else:
+            sub_image = image
 
         score = image_processing.diff_image(template_image, sub_image, mask=mask_image, color=color)
         logging.debug(f'diff score: {score}')
@@ -191,7 +193,7 @@ class Action():
         end_x = locations[loc][0]
         end_y = locations[loc][1]
 
-        self.adb.swipe(start_x, start_y, end_x, end_y, 200)
+        self.adb.swipe(start_x, start_y, end_x, end_y, 500)
 
     def open_rewards(self):
         template_path = 'templates/claim_rewards.png'
@@ -230,6 +232,17 @@ class Action():
 
         logging.info('Finding an opponent')
         while True:
+            self.sign_in()
+
+            matched, score = self.match_template('templates/support.png', config.support_loc)
+            if matched:
+                logging.info(f'Connection failed. Trying again ({score})')
+                self.touch(config.support_ok_loc)
+                time.sleep(3)
+
+                logging.info('Playing match')
+                self.touch(config.play_match_loc)
+
             matched, score = self.match_template('templates/support.png', config.support_loc)
             if matched:
                 logging.info(f'Connection failed. Trying again ({score})')
@@ -330,6 +343,11 @@ class Action():
     def kick(self):
         logging.info('Implement how to kick')
 
+    def play_shootout(self):
+        logging.info('Starting shootout')
+
+        while True:
+            matched, score = self.match_template('templates/shootout_defence.png')
 
     def test(self):
         import glob
@@ -392,15 +410,15 @@ class Action():
                 else:
                     lower_margin = 2
             else:
-                if color >= 251:
+                if color > 240:
                     upper_margin = 255 - color
                 else:
-                    upper_margin = 5
+                    upper_margin = 15
 
-                if color <= 184:
+                if color < 195:
                     lower_margin = color - 180
                 else:
-                    lower_margin = 5
+                    lower_margin = 15
 
             cur_mask = cv2.inRange(image_eh, np.array(color - lower_margin, dtype=np.uint16), np.array(color + upper_margin, dtype=np.uint16))
             mask = cv2.bitwise_or(mask, cur_mask)
@@ -409,8 +427,8 @@ class Action():
 
     def test2(self):
         import glob
-        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
-        #for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
+        #for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
+        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
             image = cv2.imread(file)
             image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
             image_eh = image_processing.hsv2eh(image_hsv)
@@ -425,9 +443,28 @@ class Action():
             my_mask = self.get_player_locations(image_eh, my_uniform_colors)
             opponent_mask = self.get_player_locations(image_eh, opponent_uniform_colors)
 
+            # Merge separated player's points, especially for striped uniform
+            kernel = np.ones((3, 3), np.uint8) 
+            my_mask = cv2.morphologyEx(my_mask, cv2.MORPH_CLOSE, kernel)
+            opponent_mask = cv2.morphologyEx(opponent_mask, cv2.MORPH_CLOSE, kernel)
+
+            # Remove noise
+            kernel = np.ones((5, 5), np.uint8) 
+            my_mask_open = cv2.morphologyEx(my_mask, cv2.MORPH_OPEN, kernel)
+            opponent_mask_open = cv2.morphologyEx(opponent_mask, cv2.MORPH_OPEN, kernel)
+
+            # Merge separated player's parts, i.e. body and leg
+            kernel = np.ones((15, 15), np.uint8) 
+            my_mask_close = cv2.morphologyEx(my_mask_open, cv2.MORPH_CLOSE, kernel)
+            opponent_mask_close = cv2.morphologyEx(opponent_mask_open, cv2.MORPH_CLOSE, kernel)
+
             cv2.imshow('frame', image)
             cv2.imshow('my', my_mask)
             cv2.imshow('op', opponent_mask)
+            cv2.imshow('my2', my_mask_open)
+            cv2.imshow('op2', opponent_mask_open)
+            cv2.imshow('my3', my_mask_close)
+            cv2.imshow('op3', opponent_mask_close)
             cv2.waitKey(0)
 
 
