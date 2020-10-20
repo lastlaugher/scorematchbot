@@ -35,6 +35,10 @@ penalty_left_corner_loc = [214, 585]
 penalty_center_top_loc = [357, 585]
 penalty_right_corner_loc = [504, 585]
 
+penalty_defend_left_corner_loc = [188, 870]
+penalty_defend_center_top_loc = [360, 870]
+penalty_defend_right_corner_loc = [530, 870]
+
 arena_loc = [360, 360]
 play_match_loc = [360, 700]
 

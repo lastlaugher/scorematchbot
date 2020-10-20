@@ -13,11 +13,24 @@ class Action():
     def __init__(self):
         self.adb = Adb()
 
-    def match_template(self, template_path:str, coordinate:list, threshold:float = 0.8, color:bool = True, mask_path:str = None):
+    def match_template(
+        self,
+        template_path:str,
+        coordinate:list = None,
+        threshold:float = 0.8,
+        color:bool = True,
+        mask_path:str = None,
+        debug_image_path:str = None,
+        diff_threshold:float = 0):
+
         template_image = cv2.imread(template_path)
         mask_image = cv2.imread(template_path) if mask_path else None
 
-        image = self.adb.get_screen()
+        if debug_image_path:
+            image = cv2.imread(debug_image_path)
+        else:
+            image = self.adb.get_screen()
+
         if coordinate:
             x = coordinate[0]
             y = coordinate[1]
@@ -27,7 +40,7 @@ class Action():
         else:
             sub_image = image
 
-        score = image_processing.diff_image(template_image, sub_image, mask=mask_image, color=color)
+        score = image_processing.diff_image(template_image, sub_image, mask=mask_image, color=color, diff_threshold=diff_threshold)
         logging.debug(f'diff score: {score}')
 
         return (True, score) if score > threshold else (False, score)
@@ -195,6 +208,23 @@ class Action():
 
         self.adb.swipe(start_x, start_y, end_x, end_y, 500)
 
+        location_str = ['left', 'center', 'right']
+        logging.info(f'Kicked {location_str[loc]}')
+
+    def defend_penalty(self):
+        locations = [
+            config.penalty_defend_left_corner_loc,
+            config.penalty_defend_center_top_loc,
+            config.penalty_defedn_right_corner_loc,
+        ]
+
+        loc = random.randint(0, 2)
+
+        self.adb.touch(loc[0], loc[2])
+
+        location_str = ['left', 'center', 'right']
+        logging.info(f'Defend {location_str[loc]}')
+
     def open_rewards(self):
         template_path = 'templates/claim_rewards.png'
         coordinate = config.rewards_loc
@@ -347,35 +377,34 @@ class Action():
         logging.info('Starting shootout')
 
         while True:
-            matched, score = self.match_template('templates/shootout_defence.png')
+            matched, score = self.match_template('templates/shootout_defence.png', mask_path='templates/shootout_defence.png', threshold=0.7, diff_threshold=50)
+            if (matched):
+                logging.info('Found shootout defence')
+                self.defend_penalty()
+
+                time.sleep(1)
+                continue
+
+            matched, score = self.match_template('templates/shootout_offence.png', mask_path='templates/shootout_offence.png', threshold=0.7, diff_threshold=50)
+            if (matched):
+                logging.info('Found shootout offence')
+                self.kick_penalty()
+
+                time.sleep(1)
+                continue
+
+            logging.info('None of defence and offence found')
+            break
 
     def test(self):
         import glob
-        #for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
-        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
-            template_image = cv2.imread('templates/kick.png', cv2.IMREAD_GRAYSCALE)
-            image = cv2.imread(file, cv2.IMREAD_GRAYSCALE)
+        for path in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shootout\defence\*.png')):
+            matched, score = self.match_template('templates/shootout_defence.png', mask_path='templates/shootout_defence.png', threshold=0.7, diff_threshold=50, debug_image_path=path)
+            logging.info(f'{path} {matched} {score}')
 
-            total_pixel = 0
-            match_pixel = 0
-            for h in range(template_image.shape[0]):
-                for w in range(template_image.shape[1]):
-                    if template_image[h, w] > 0:
-                        local_maximum = True
-                        for m in range(-1, 1):
-                            for n in range(-1, 1):
-                                if template_image[h + m, w + n] > 0:
-                                    continue 
-
-                                if image[h, w] < image[h + m, w + n]:
-                                    local_maximum = False
-
-                        if local_maximum:
-                            match_pixel += 1
-                        total_pixel += 1
-
-            logging.info(f'{file} diff score: {match_pixel / total_pixel}')
-   
+        for path in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shootout\offence\*.png')):
+            matched, score = self.match_template('templates/shootout_offence.png', mask_path='templates/shootout_offence.png', threshold=0.7, diff_threshold=50, debug_image_path=path)
+            logging.info(f'{path} {matched} {score}')
 
     def estimate_uniform_colors(self, image_hsv, uniform_loc):
         uniform_eh = image_processing.hsv2eh(image_processing.crop(image_hsv, uniform_loc))
