@@ -215,12 +215,12 @@ class Action():
         locations = [
             config.penalty_defend_left_corner_loc,
             config.penalty_defend_center_top_loc,
-            config.penalty_defedn_right_corner_loc,
+            config.penalty_defend_right_corner_loc,
         ]
 
         loc = random.randint(0, 2)
 
-        self.adb.touch(loc[0], loc[2])
+        self.adb.touch(locations[loc][0], locations[loc][1])
 
         location_str = ['left', 'center', 'right']
         logging.info(f'Defend {location_str[loc]}')
@@ -376,6 +376,7 @@ class Action():
     def play_shootout(self):
         logging.info('Starting shootout')
 
+        not_found_count = 0
         while True:
             matched, score = self.match_template('templates/shootout_defence.png', mask_path='templates/shootout_defence.png', threshold=0.7, diff_threshold=50)
             if (matched):
@@ -394,7 +395,12 @@ class Action():
                 continue
 
             logging.info('None of defence and offence found')
-            break
+            not_found_count += 1
+
+            if not_found_count == 10:
+                logging.info('Finished the shootout')
+                break
+
 
     def test(self):
         import glob
