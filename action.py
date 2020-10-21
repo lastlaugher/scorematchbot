@@ -19,15 +19,15 @@ class Action():
         coordinate:list = None,
         threshold:float = 0.8,
         color:bool = True,
-        mask_path:str = None,
-        debug_image_path:str = None,
+        mask:bool = False,
+        image_path:str = None,
         diff_threshold:float = 0):
 
         template_image = cv2.imread(template_path)
-        mask_image = cv2.imread(template_path) if mask_path else None
+        mask_image = cv2.imread(template_path) if mask else None
 
-        if debug_image_path:
-            image = cv2.imread(debug_image_path)
+        if image_path:
+            image = cv2.imread(image_path)
         else:
             image = self.adb.get_screen()
 
@@ -72,7 +72,7 @@ class Action():
         template_path = 'templates/free_collect.png'
         coordinate = config.free_collect_loc
         logging.info('Trying to find free collect package')
-        matched, score = self.match_template(template_path, coordinate, mask_path=template_path)
+        matched, score = self.match_template(template_path, coordinate, mask=True)
         if matched:
             logging.info(f'Free collect package is found ({score})')
             self.touch_box(coordinate)
@@ -183,16 +183,6 @@ class Action():
                 logging.info('App is restarted')
                 break
 
-    def match_kick(self):
-        template_image = cv2.imread('templates/kick.png')
-
-        image = self.adb.get_screen()
-        sub_image = image[y:y + height, x:x + width]
-
-        score = image_processing.diff_image(template_image, sub_image)
-
-        return True if score > 0.8 else False
-
     def kick_penalty(self):
         locations = [
             config.penalty_left_corner_loc,
@@ -230,7 +220,7 @@ class Action():
         coordinate = config.rewards_loc
         logging.info('Trying to find rewards')
 
-        matched, score = self.match_template(template_path, coordinate, mask_path=template_path)
+        matched, score = self.match_template(template_path, coordinate, mask=True)
 
         if matched:
             logging.info(f'Reword box is found ({score})')
@@ -273,18 +263,9 @@ class Action():
                 logging.info('Playing match')
                 self.touch(config.play_match_loc)
 
-            matched, score = self.match_template('templates/support.png', config.support_loc)
-            if matched:
-                logging.info(f'Connection failed. Trying again ({score})')
-                self.touch(config.support_ok_loc)
-                time.sleep(3)
-
-                logging.info('Playing match')
-                self.touch(config.play_match_loc)
-
             matched, score = self.match_template('templates/bid.png', config.bid_loc)
             if matched:
-                logging.info(f'Bid stage (score)')
+                logging.info(f'Bid stage ({score})')
                 time.sleep(5)
                 break
 
@@ -301,13 +282,17 @@ class Action():
             photo_loc[1]:photo_loc[1] + photo_loc[3],
             photo_loc[0]:photo_loc[0] + photo_loc[2]
         ]
+
         idx = 0
         while True:
             matched, score = self.match_template('templates/game_end.png', config.game_end_loc)
             if matched:
                 logging.info(f'Game ended ({score})')
-                self.touch_box(config.game_end_loc)
-                time.sleep(3)
+                break
+
+            matched, score = self.match_template('templates/timeout.png', config.timeout_loc, mask=True, threshold=0.9)
+            if matched:
+                logging.info(f'Timeout ({score})')
                 break
 
             image = self.adb.get_screen(color=False)
@@ -334,10 +319,31 @@ class Action():
             prev_image = cur_image
             idx += 1
 
-        matched, score = self.match_template('templates/okay.png', config.okay_loc)
-        if matched:
-            logging.info('Relagation. Touch okay ({score})')
+        while True:
+            logging.info('Trying to find shootout')
+            matched, score = self.match_template('templates/shootout.png', config.shootout_loc, mask=True)
+            if matched:
+                logging.info(f'Shootout started ({score})')
+                self.play_shootout()
+
+            logging.info('Trying to find game end')
+            matched, score = self.match_template('templates/game_end.png', config.game_end_loc)
+            if matched:
+                logging.info(f'Game ended ({score})')
+                self.touch_box(config.game_end_loc)
+                break
+
+            time.sleep(1)
+
+        relagation_matched = self.match_template('templates/okay.png', config.okay_loc)
+        promotion_package_matched = self.match_template('templates/promotion_package.png', config.promotion_package_loc)
+
+        if relagation_matched:
+            logging.info('Relagation. Touch okay')
             self.touch_box(config.okay_loc)
+        elif promotion_package_matched:
+            logging.info('Promotion pakcage. Touch close')
+            self.touch(config.promotion_package_close_loc)
         else:
             logging.info('Accepting video package')
             self.touch(config.video_package_play_loc)
@@ -378,7 +384,7 @@ class Action():
 
         not_found_count = 0
         while True:
-            matched, score = self.match_template('templates/shootout_defence.png', mask_path='templates/shootout_defence.png', threshold=0.7, diff_threshold=50)
+            matched, score = self.match_template('templates/shootout_defence.png', mask=True)
             if (matched):
                 logging.info('Found shootout defence')
                 self.defend_penalty()
@@ -386,7 +392,7 @@ class Action():
                 time.sleep(1)
                 continue
 
-            matched, score = self.match_template('templates/shootout_offence.png', mask_path='templates/shootout_offence.png', threshold=0.7, diff_threshold=50)
+            matched, score = self.match_template('templates/shootout_offence.png', mask=True)
             if (matched):
                 logging.info('Found shootout offence')
                 self.kick_penalty()
@@ -405,11 +411,11 @@ class Action():
     def test(self):
         import glob
         for path in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shootout\defence\*.png')):
-            matched, score = self.match_template('templates/shootout_defence.png', mask_path='templates/shootout_defence.png', threshold=0.7, diff_threshold=50, debug_image_path=path)
+            matched, score = self.match_template('templates/shootout_defence.png', mask=True)
             logging.info(f'{path} {matched} {score}')
 
         for path in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shootout\offence\*.png')):
-            matched, score = self.match_template('templates/shootout_offence.png', mask_path='templates/shootout_offence.png', threshold=0.7, diff_threshold=50, debug_image_path=path)
+            matched, score = self.match_template('templates/shootout_offence.png', mask=True)
             logging.info(f'{path} {matched} {score}')
 
     def estimate_uniform_colors(self, image_hsv, uniform_loc):

@@ -58,3 +58,9 @@ sign_in_loc = [360, 830]
 
 my_uniform_loc = [236, 36, 48, 57]
 opponent_uniform_loc = [437, 36, 48, 57]
+
+shootout_loc = [159, 265, 402, 110]
+timeout_loc = [329, 60, 61, 14]
+
+promotion_package_loc = [172, 390, 376, 43]
+promotion_package_close_loc = [643, 337]
