@@ -331,20 +331,22 @@ class Action():
             if matched:
                 logging.info(f'Game ended ({score})')
                 self.touch_box(config.game_end_loc)
+                time.sleep(3)
                 break
 
             time.sleep(1)
 
-        relagation_matched = self.match_template('templates/okay.png', config.okay_loc)
-        promotion_package_matched = self.match_template('templates/promotion_package.png', config.promotion_package_loc)
+        relagation_matched, _ = self.match_template('templates/okay.png', config.okay_loc)
+        promotion_package_matched, _ = self.match_template('templates/promotion_package.png', config.promotion_package_loc)
 
         if relagation_matched:
             logging.info('Relagation. Touch okay')
             self.touch_box(config.okay_loc)
-        elif promotion_package_matched:
-            logging.info('Promotion pakcage. Touch close')
-            self.touch(config.promotion_package_close_loc)
         else:
+            if promotion_package_matched:
+                logging.info('Promotion pakcage. Touch close')
+                self.touch(config.promotion_package_close_loc)
+
             logging.info('Accepting video package')
             self.touch(config.video_package_play_loc)
 
@@ -378,13 +380,19 @@ class Action():
 
     def kick(self):
         logging.info('Implement how to kick')
+        zone = [167, 420, 385, 289]
+
+        x = random.randint(zone[0], zone[0] + zone[2])
+        y = random.randint(zone[1], zone[1] + zone[3])
+
+        self.adb.swipe(config.kick_start_loc[0], config.kick_start_loc[1], x, y, 500)
 
     def play_shootout(self):
         logging.info('Starting shootout')
 
         not_found_count = 0
         while True:
-            matched, score = self.match_template('templates/shootout_defence.png', mask=True)
+            matched, score = self.match_template('templates/shootout_defence.png', mask=True, threshold=0.7, diff_threshold=50)
             if (matched):
                 logging.info('Found shootout defence')
                 self.defend_penalty()
@@ -392,7 +400,7 @@ class Action():
                 time.sleep(1)
                 continue
 
-            matched, score = self.match_template('templates/shootout_offence.png', mask=True)
+            matched, score = self.match_template('templates/shootout_offence.png', mask=True, threshold=0.7, diff_threshold=50)
             if (matched):
                 logging.info('Found shootout offence')
                 self.kick_penalty()
