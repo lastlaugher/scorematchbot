@@ -1,3 +1,4 @@
+# y, x
 screen_size = [1280, 720]
 
 # x, y, width, height
@@ -45,6 +46,9 @@ play_match_loc = [360, 700]
 support_loc = [45, 381, 630, 521]
 support_ok_loc = [526, 830]
 
+no_opponent_loc = [66, 561, 587, 90]
+no_opponent_ok_loc = [360, 780]
+
 bid_loc = [50, 880, 619, 181]
 game_end_loc = [587, 1148, 116, 123]
 video_package_cancel_loc = [200, 800]
@@ -66,3 +70,5 @@ promotion_package_loc = [172, 390, 376, 43]
 promotion_package_close_loc = [643, 337]
 
 kick_start_loc = [358, 870]
+
+dashboard_height = 200

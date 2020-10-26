@@ -213,7 +213,7 @@ class Action():
         self.adb.touch(locations[loc][0], locations[loc][1])
 
         location_str = ['left', 'center', 'right']
-        logging.info(f'Defend {location_str[loc]}')
+        logging.info(f'Defended {location_str[loc]}')
 
     def open_rewards(self):
         template_path = 'templates/claim_rewards.png'
@@ -254,6 +254,7 @@ class Action():
         while True:
             self.sign_in()
 
+            logging.info(f'Trying to find support screen')
             matched, score = self.match_template('templates/support.png', config.support_loc)
             if matched:
                 logging.info(f'Connection failed. Trying again ({score})')
@@ -263,6 +264,17 @@ class Action():
                 logging.info('Playing match')
                 self.touch(config.play_match_loc)
 
+            logging.info(f'Trying to find no opponent screen')
+            matched, score = self.match_template('templates/no_opponent.png', config.no_opponent_loc)
+            if matched:
+                logging.info(f'Connection failed. Trying again ({score})')
+                self.touch(config.no_opponent_ok_loc)
+                time.sleep(3)
+
+                logging.info('Playing match')
+                self.touch(config.play_match_loc)
+
+            logging.info(f'Trying to find bid screen')
             matched, score = self.match_template('templates/bid.png', config.bid_loc)
             if matched:
                 logging.info(f'Bid stage ({score})')
@@ -308,7 +320,7 @@ class Action():
 
             if np.sum(my_photo_diff) != 0:
                 logging.info(f'{idx} My turn to kick') 
-                self.kick()
+                self.kick(image)
             elif np.sum(opponent_photo_diff) != 0:
                 logging.info(f'{idx} Opponent\'s turn to kick') 
             else:
@@ -378,8 +390,94 @@ class Action():
 
         return False            
 
-    def kick(self):
-        logging.info('Implement how to kick')
+    def shoot(self, gray_image):
+        '''
+        1. rgb2gray
+        2. remove dashboard region
+        3. 250 thresholding
+        4. hough transform
+        5. find upper goal post
+        6. shoot to the farther corner
+        '''
+        gray = gray_image.copy()
+
+        gray[0:config.dashboard_height,:] = 0
+        gray[gray < 250] = 0
+
+        lines = cv2.HoughLines(gray, 1, np.pi/180, 150)
+
+        if lines is None or len(lines) == 0:
+            logging.debug('There is no line')
+            return False
+
+        index = 0 if len(lines) == 1 else 1
+        rho, theta = sorted(lines, key=lambda x: x[0][0])[index][0]
+
+        if rho > 600:
+            logging.debug('It seems the goal post is mine')
+            return False
+
+        a = -np.cos(theta) / np.sin(theta)
+        b = rho / np.sin(theta)
+
+        x1 = 0
+        y1 = int(a*x1 + b)
+
+        x2 = config.screen_size[1] - 1
+        y2 = int(a*x2 + b)
+
+        for x in range(config.screen_size[1]):
+            y = int(a*x + b)
+            if y < 0 or y >= config.screen_size[0]:
+                continue
+
+            if gray[y, x] > 0:
+                logging.debug(f'({x}, {y}), is starting point of goal post')
+                x1 = x
+                y1 = y
+                break
+
+        for x in reversed(range(config.screen_size[1])):
+            y = int(a*x + b)
+            if y < 0 or y >= config.screen_size[0]:
+                continue
+
+            if gray[y, x] > 0:
+                logging.debug(f'({x}, {y}), is enging point of goal post')
+                x2 = x
+                y2 = y
+                break
+
+        center = config.screen_size[1] / 2
+        if abs(x1 - center) > abs(x2 - center):
+            target_x = x1 + 10
+        else:
+            target_x = x2 - 10
+
+        target_y = (y1 + y2) / 2 - 15
+
+        logging.debug(f'Kicked to ({target_x}, {target_y})')
+        self.adb.swipe(config.kick_start_loc[0], config.kick_start_loc[1], target_x, target_y, 500)
+
+        return True
+
+    def kick(self, gray):
+
+        if self.shoot(gray):
+            return
+
+        # else
+        #   execute player location
+        #   matching forward kick template
+        #   if matched
+        #       kick to the safest zone (forward)
+        #   else:   # backward kick
+        #       kick to the safest zone (backword)
+        #   if can't find safe zone
+        #       kick the farthest
+
+
+        ## determine direction (forward, backward, goalkick, header)
         zone = [167, 420, 385, 289]
 
         x = random.randint(zone[0], zone[0] + zone[2])
