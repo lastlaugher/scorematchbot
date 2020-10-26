@@ -297,11 +297,13 @@ class Action():
 
         idx = 0
         while True:
+            logging.info('Trying to find game end screen')
             matched, score = self.match_template('templates/game_end.png', config.game_end_loc)
             if matched:
                 logging.info(f'Game ended ({score})')
                 break
 
+            logging.info('Trying to find time out screen')
             matched, score = self.match_template('templates/timeout.png', config.timeout_loc, mask=True, threshold=0.9)
             if matched:
                 logging.info(f'Timeout ({score})')
@@ -454,7 +456,7 @@ class Action():
         else:
             target_x = x2 - 10
 
-        target_y = (y1 + y2) / 2 - 15
+        target_y = (y1 + y2) / 2 - 20
 
         logging.debug(f'Kicked to ({target_x}, {target_y})')
         self.adb.swipe(config.kick_start_loc[0], config.kick_start_loc[1], target_x, target_y, 500)
