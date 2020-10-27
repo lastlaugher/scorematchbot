@@ -71,4 +71,8 @@ promotion_package_close_loc = [643, 337]
 
 kick_start_loc = [358, 870]
 
+kick_backward_start_loc = [
+    [360, 490],
+    [360, 410],
+]
 dashboard_height = 200

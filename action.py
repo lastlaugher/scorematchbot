@@ -20,15 +20,13 @@ class Action():
         threshold:float = 0.8,
         color:bool = True,
         mask:bool = False,
-        image_path:str = None,
+        image:np.ndarray = None,
         diff_threshold:float = 0):
 
         template_image = cv2.imread(template_path)
         mask_image = cv2.imread(template_path) if mask else None
 
-        if image_path:
-            image = cv2.imread(image_path)
-        else:
+        if image is None:
             image = self.adb.get_screen()
 
         if coordinate:
@@ -297,21 +295,23 @@ class Action():
 
         idx = 0
         while True:
+            color_image = self.adb.get_screen()
+
             logging.info('Trying to find game end screen')
-            matched, score = self.match_template('templates/game_end.png', config.game_end_loc)
+            matched, score = self.match_template('templates/game_end.png', config.game_end_loc, image=color_image)
             if matched:
                 logging.info(f'Game ended ({score})')
                 break
 
             logging.info('Trying to find time out screen')
-            matched, score = self.match_template('templates/timeout.png', config.timeout_loc, mask=True, threshold=0.9)
+            matched, score = self.match_template('templates/timeout.png', config.timeout_loc, mask=True, threshold=0.9, image=color_image)
             if matched:
                 logging.info(f'Timeout ({score})')
                 break
 
-            image = self.adb.get_screen(color=False)
+            gray_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
 
-            cur_image = image[
+            cur_image = gray_image[
                 photo_loc[1]:photo_loc[1] + photo_loc[3],
                 photo_loc[0]:photo_loc[0] + photo_loc[2]
             ]
@@ -322,13 +322,14 @@ class Action():
 
             if np.sum(my_photo_diff) != 0:
                 logging.info(f'{idx} My turn to kick') 
-                self.kick(image)
+                self.kick(gray_image, color_image)
             elif np.sum(opponent_photo_diff) != 0:
                 logging.info(f'{idx} Opponent\'s turn to kick') 
+                self.defend(gray_image, color_image)
             else:
                 logging.info(f'{idx} In-progress')
 
-            cv2.imwrite(f'frames/frame_{idx:05d}.png', diff_image)
+            cv2.imwrite(f'.debug/frame_{idx:05d}.png', diff_image)
 
             prev_image = cur_image
             idx += 1
@@ -392,7 +393,7 @@ class Action():
 
         return False            
 
-    def shoot(self, gray_image):
+    def shoot(self, gray_image, color_image):
         '''
         1. rgb2gray
         2. remove dashboard region
@@ -463,11 +464,15 @@ class Action():
 
         return True
 
-    def kick(self, gray):
+    def kick(self, gray_image, color_image):
 
-        if self.shoot(gray):
+        if self.shoot(gray_image, color_image):
             return
 
+        # if corner kick, kick to the header position
+        # self.header()
+
+        self.kick_pass(color_image)
         # else
         #   execute player location
         #   matching forward kick template
@@ -486,6 +491,10 @@ class Action():
         y = random.randint(zone[1], zone[1] + zone[3])
 
         self.adb.swipe(config.kick_start_loc[0], config.kick_start_loc[1], x, y, 500)
+
+    def defend(self, gray_image, color_image):
+        logging.info('Implement how to defend')
+        pass
 
     def play_shootout(self):
         logging.info('Starting shootout')
@@ -515,6 +524,63 @@ class Action():
                 logging.info('Finished the shootout')
                 break
 
+    def kick_pass(self, image):
+        my_stats, my_centroids, op_stats, op_centroid = self.get_player_map(image)
+
+        # kick start position 에 우리 선수가 있으면, forward 킥
+        # 아니라면 backward 킥
+        #    y좌표 작아지는(커지는) 순서대로 최대 N(=5)개까지 검사
+        #    주변에 상대가 없으면 선택, 킥
+        #    직선거리 주변에 상대가 있으면 무시
+
+
+    def get_player_map(self, image):
+        image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        image_eh = image_processing.hsv2eh(image_hsv)
+
+        my_uniform_colors = self.estimate_uniform_colors(image_hsv, config.my_uniform_loc)
+        opponent_uniform_colors = self.estimate_uniform_colors(image_hsv, config.opponent_uniform_loc)
+
+        logging.debug(f'my uniform color: {",".join(map(str, my_uniform_colors))}')
+        logging.debug(f'opponent uniform color: {",".join(map(str, opponent_uniform_colors))}')
+
+        my_mask = self.get_player_locations(image_eh, my_uniform_colors)
+        opponent_mask = self.get_player_locations(image_eh, opponent_uniform_colors)
+
+        # Remove upper watcher region
+        my_mask[0:255, :] = 0
+        opponent_mask[0:255, :] = 0
+
+        # Merge separated player's points, especially for striped uniform
+        kernel = np.ones((3, 3), np.uint8) 
+        my_mask = cv2.morphologyEx(my_mask, cv2.MORPH_CLOSE, kernel)
+        opponent_mask = cv2.morphologyEx(opponent_mask, cv2.MORPH_CLOSE, kernel)
+
+        # Remove noise
+        kernel = np.ones((5, 5), np.uint8) 
+        my_mask_open = cv2.morphologyEx(my_mask, cv2.MORPH_OPEN, kernel)
+        opponent_mask_open = cv2.morphologyEx(opponent_mask, cv2.MORPH_OPEN, kernel)
+
+        # Merge separated player's parts, i.e. body and leg
+        kernel = np.ones((15, 15), np.uint8) 
+        my_mask_close = cv2.morphologyEx(my_mask_open, cv2.MORPH_CLOSE, kernel)
+        opponent_mask_close = cv2.morphologyEx(opponent_mask_open, cv2.MORPH_CLOSE, kernel)
+
+        _, _, my_stats, my_centroid = cv2.connectedComponentsWithStats(my_mask_close)
+        _, _, op_stats, op_centroid = cv2.connectedComponentsWithStats(opponent_mask_close)
+
+#        cv2.imshow('frame', image)
+#        cv2.imshow('my', my_mask)
+#        cv2.imshow('op', opponent_mask)
+#        cv2.imshow('my2', my_mask_open)
+#        cv2.imshow('op2', opponent_mask_open)
+#        cv2.imshow('my3', my_mask_close)
+#        cv2.imshow('op3', opponent_mask_close)
+#
+#        cv2.waitKey(0)
+
+        # Remove the first element which covers entire screen
+        return my_stats[1:], my_centroid[1:], op_stats[1:], op_centroid[1:]
 
     def test(self):
         import glob
@@ -576,8 +642,14 @@ class Action():
 
     def test2(self):
         import glob
-        #for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
-        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
+        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
+            image = cv2.imread(file)
+            self.get_player_map(image)
+
+    def test3(self):
+        import glob
+        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
+#        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
             image = cv2.imread(file)
             image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
             image_eh = image_processing.hsv2eh(image_hsv)
@@ -588,9 +660,12 @@ class Action():
             logging.info(f'my uniform color: {",".join(map(str, my_uniform_colors))}')
             logging.info(f'opponent uniform color: {",".join(map(str, opponent_uniform_colors))}')
 
-
             my_mask = self.get_player_locations(image_eh, my_uniform_colors)
             opponent_mask = self.get_player_locations(image_eh, opponent_uniform_colors)
+
+            # Remove upper watcher region
+            my_mask[0:255, :] = 0
+            opponent_mask[0:255, :] = 0
 
             # Merge separated player's points, especially for striped uniform
             kernel = np.ones((3, 3), np.uint8) 
@@ -603,7 +678,7 @@ class Action():
             opponent_mask_open = cv2.morphologyEx(opponent_mask, cv2.MORPH_OPEN, kernel)
 
             # Merge separated player's parts, i.e. body and leg
-            kernel = np.ones((15, 15), np.uint8) 
+            kernel = np.ones((25, 25), np.uint8) 
             my_mask_close = cv2.morphologyEx(my_mask_open, cv2.MORPH_CLOSE, kernel)
             opponent_mask_close = cv2.morphologyEx(opponent_mask_open, cv2.MORPH_CLOSE, kernel)
 
