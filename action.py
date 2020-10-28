@@ -8,20 +8,25 @@ from adb import Adb
 
 import config
 import image_processing
+import sys
+import math as m
+
 
 class Action():
-    def __init__(self):
+    def __init__(self, debug: bool = False):
         self.adb = Adb()
+        self.debug = debug
+        self.frame_index = 0
 
     def match_template(
-        self,
-        template_path:str,
-        coordinate:list = None,
-        threshold:float = 0.8,
-        color:bool = True,
-        mask:bool = False,
-        image:np.ndarray = None,
-        diff_threshold:float = 0):
+            self,
+            template_path: str = None,
+            coordinate: list = None,
+            threshold: float = 0.8,
+            color: bool = True,
+            mask: bool = False,
+            image: np.ndarray = None,
+            diff_threshold: float = 0):
 
         template_image = cv2.imread(template_path)
         mask_image = cv2.imread(template_path) if mask else None
@@ -32,18 +37,19 @@ class Action():
         if coordinate:
             x = coordinate[0]
             y = coordinate[1]
-            width  = coordinate[2]
+            width = coordinate[2]
             height = coordinate[3]
             sub_image = image[y:y + height, x:x + width]
         else:
             sub_image = image
 
-        score = image_processing.diff_image(template_image, sub_image, mask=mask_image, color=color, diff_threshold=diff_threshold)
+        score = image_processing.diff_image(
+            template_image, sub_image, mask=mask_image, color=color, diff_threshold=diff_threshold)
         logging.debug(f'diff score: {score}')
 
         return (True, score) if score > threshold else (False, score)
 
-    def find_template(self, template_path:str):
+    def find_template(self, template_path: str):
         template_image = cv2.imread(template_path)
         image = self.adb.get_screen()
 
@@ -52,10 +58,10 @@ class Action():
 
         return location
 
-    def touch_box(self, coordinate:list):
+    def touch_box(self, coordinate: list):
         x = coordinate[0]
         y = coordinate[1]
-        width  = coordinate[2]
+        width = coordinate[2]
         height = coordinate[3]
 
         self.adb.touch(x + width / 2, y + height / 2)
@@ -63,21 +69,25 @@ class Action():
     def touch_center(self):
         self.adb.touch(config.screen_size[0] / 2, config.screen_size[1] / 2)
 
-    def touch(self, coordinate:list):
+    def touch(self, coordinate: list):
         self.adb.touch(coordinate[0], coordinate[1])
+
+    def swipe(self, start: list, end: list):
+        self.adb.swipe(start[0], start[1], end[0], end[1], 500)
 
     def open_package(self):
         template_path = 'templates/free_collect.png'
         coordinate = config.free_collect_loc
         logging.info('Trying to find free collect package')
-        matched, score = self.match_template(template_path, coordinate, mask=True)
+        matched, score = self.match_template(
+            template_path, coordinate, mask=True)
         if matched:
             logging.info(f'Free collect package is found ({score})')
             self.touch_box(coordinate)
 
             logging.info('Playing video')
             time.sleep(40)
-            
+
             logging.info('Finished playing video')
             self.touch(config.free_collect_end_loc)
             self.touch(config.video_package_close_loc)
@@ -125,7 +135,8 @@ class Action():
 
         for idx, coordinate in enumerate(coordinates, start=1):
             logging.info(f'Trying to find box {idx} to unlock')
-            matched, score = self.match_template(template_path, coordinate, threshold=0.7)
+            matched, score = self.match_template(
+                template_path, coordinate, threshold=0.7)
 
             if matched:
                 logging.info(f'Found box {idx} to unlock ({score})')
@@ -147,21 +158,26 @@ class Action():
 
             matched, score = self.match_template(template_path, coordinate)
             if matched:
-                logging.info(f'Found okay button to finish opening cards ({score})')
+                logging.info(
+                    f'Found okay button to finish opening cards ({score})')
                 self.touch_box(coordinate)
                 break
 
-            matched, score = self.match_template('templates/upgrade.png', config.upgrade_loc)
+            matched, score = self.match_template(
+                'templates/upgrade.png', config.upgrade_loc)
             if matched:
-                logging.info(f'Player upgrade screen showed. Touch close location and going back ({score})')
+                logging.info(
+                    f'Player upgrade screen showed. Touch close location and going back ({score})')
                 self.touch(config.close_loc)
                 time.sleep(3)
                 self.touch(config.go_back_loc)
                 break
 
-            matched, score = self.match_template('templates/formation.png', config.formation_loc)
+            matched, score = self.match_template(
+                'templates/formation.png', config.formation_loc)
             if matched:
-                logging.info(f'Formation screen showed. Touch ok location and going back ({score})')
+                logging.info(
+                    f'Formation screen showed. Touch ok location and going back ({score})')
                 self.touch(config.formation_ok_loc)
                 time.sleep(3)
                 self.touch(config.go_back_loc)
@@ -169,14 +185,15 @@ class Action():
 
             logging.info('Touch center since okay button is not found')
             self.touch_center()
-            
+
             logging.info('Sleep 1 sec')
             time.sleep(1)
 
             idx += 1
 
             if idx > 30:
-                logging.error('Can\'t find the okay button during 30 iterations')
+                logging.error(
+                    'Can\'t find the okay button during 30 iterations')
                 self.adb.restart_app()
                 logging.info('App is restarted')
                 break
@@ -189,12 +206,8 @@ class Action():
         ]
 
         loc = random.randint(0, 2)
-        start_x = config.penalty_start_loc[0]
-        start_y = config.penalty_start_loc[1]
-        end_x = locations[loc][0]
-        end_y = locations[loc][1]
 
-        self.adb.swipe(start_x, start_y, end_x, end_y, 500)
+        self.swipe(config.penalty_start_loc, locations[loc])
 
         location_str = ['left', 'center', 'right']
         logging.info(f'Kicked {location_str[loc]}')
@@ -218,7 +231,8 @@ class Action():
         coordinate = config.rewards_loc
         logging.info('Trying to find rewards')
 
-        matched, score = self.match_template(template_path, coordinate, mask=True)
+        matched, score = self.match_template(
+            template_path, coordinate, mask=True)
 
         if matched:
             logging.info(f'Reword box is found ({score})')
@@ -253,7 +267,8 @@ class Action():
             self.sign_in()
 
             logging.info(f'Trying to find support screen')
-            matched, score = self.match_template('templates/support.png', config.support_loc)
+            matched, score = self.match_template(
+                'templates/support.png', config.support_loc)
             if matched:
                 logging.info(f'Connection failed. Trying again ({score})')
                 self.touch(config.support_ok_loc)
@@ -263,7 +278,8 @@ class Action():
                 self.touch(config.play_match_loc)
 
             logging.info(f'Trying to find no opponent screen')
-            matched, score = self.match_template('templates/no_opponent.png', config.no_opponent_loc)
+            matched, score = self.match_template(
+                'templates/no_opponent.png', config.no_opponent_loc)
             if matched:
                 logging.info(f'Connection failed. Trying again ({score})')
                 self.touch(config.no_opponent_ok_loc)
@@ -273,7 +289,8 @@ class Action():
                 self.touch(config.play_match_loc)
 
             logging.info(f'Trying to find bid screen')
-            matched, score = self.match_template('templates/bid.png', config.bid_loc)
+            matched, score = self.match_template(
+                'templates/bid.png', config.bid_loc)
             if matched:
                 logging.info(f'Bid stage ({score})')
                 time.sleep(5)
@@ -282,12 +299,12 @@ class Action():
         logging.info('Game starated')
         prev_image = self.adb.get_screen(color=False)
         photo_loc = [
-            0, 
+            0,
             0,
             prev_image.shape[1],
             config.my_photo_loc[1] + config.my_photo_loc[3]
-            ]
-            
+        ]
+
         prev_image = prev_image[
             photo_loc[1]:photo_loc[1] + photo_loc[3],
             photo_loc[0]:photo_loc[0] + photo_loc[2]
@@ -298,13 +315,15 @@ class Action():
             color_image = self.adb.get_screen()
 
             logging.info('Trying to find game end screen')
-            matched, score = self.match_template('templates/game_end.png', config.game_end_loc, image=color_image)
+            matched, score = self.match_template(
+                'templates/game_end.png', config.game_end_loc, image=color_image)
             if matched:
                 logging.info(f'Game ended ({score})')
                 break
 
             logging.info('Trying to find time out screen')
-            matched, score = self.match_template('templates/timeout.png', config.timeout_loc, mask=True, threshold=0.9, image=color_image)
+            matched, score = self.match_template(
+                'templates/timeout.png', config.timeout_loc, mask=True, threshold=0.9, image=color_image)
             if matched:
                 logging.info(f'Timeout ({score})')
                 break
@@ -317,14 +336,16 @@ class Action():
             ]
 
             diff_image = cur_image - prev_image
-            my_photo_diff = image_processing.crop(diff_image, config.my_photo_loc)
-            opponent_photo_diff = image_processing.crop(diff_image, config.opponent_photo_loc)
+            my_photo_diff = image_processing.crop(
+                diff_image, config.my_photo_loc)
+            opponent_photo_diff = image_processing.crop(
+                diff_image, config.opponent_photo_loc)
 
             if np.sum(my_photo_diff) != 0:
-                logging.info(f'{idx} My turn to kick') 
+                logging.info(f'{idx} My turn to kick')
                 self.kick(gray_image, color_image)
             elif np.sum(opponent_photo_diff) != 0:
-                logging.info(f'{idx} Opponent\'s turn to kick') 
+                logging.info(f'{idx} Opponent\'s turn to kick')
                 self.defend(gray_image, color_image)
             else:
                 logging.info(f'{idx} In-progress')
@@ -336,13 +357,15 @@ class Action():
 
         while True:
             logging.info('Trying to find shootout')
-            matched, score = self.match_template('templates/shootout.png', config.shootout_loc, mask=True)
+            matched, score = self.match_template(
+                'templates/shootout.png', config.shootout_loc, mask=True)
             if matched:
                 logging.info(f'Shootout started ({score})')
                 self.play_shootout()
 
             logging.info('Trying to find game end')
-            matched, score = self.match_template('templates/game_end.png', config.game_end_loc)
+            matched, score = self.match_template(
+                'templates/game_end.png', config.game_end_loc)
             if matched:
                 logging.info(f'Game ended ({score})')
                 self.touch_box(config.game_end_loc)
@@ -351,8 +374,10 @@ class Action():
 
             time.sleep(1)
 
-        relagation_matched, _ = self.match_template('templates/okay.png', config.okay_loc)
-        promotion_package_matched, _ = self.match_template('templates/promotion_package.png', config.promotion_package_loc)
+        relagation_matched, _ = self.match_template(
+            'templates/okay.png', config.okay_loc)
+        promotion_package_matched, _ = self.match_template(
+            'templates/promotion_package.png', config.promotion_package_loc)
 
         if relagation_matched:
             logging.info('Relagation. Touch okay')
@@ -367,7 +392,7 @@ class Action():
 
             logging.info('Playing video')
             time.sleep(60)
-            
+
             logging.info('Finished playing video')
             self.touch(config.video_package_close_loc)
             self.touch(config.free_collect_end_loc)
@@ -384,14 +409,15 @@ class Action():
 
     def sign_in(self):
         logging.info('Trying to find signed-out screen')
-        matched, score = self.match_template('templates/signed_out.png', config.signed_out_loc)
+        matched, score = self.match_template(
+            'templates/signed_out.png', config.signed_out_loc)
         if matched:
             logging.info('Found signed-out message. Trying to sign-in')
             self.touch(config.sign_in_loc)
             time.sleep(10)
             return True
 
-        return False            
+        return False
 
     def shoot(self, gray_image, color_image):
         '''
@@ -404,7 +430,7 @@ class Action():
         '''
         gray = gray_image.copy()
 
-        gray[0:config.dashboard_height,:] = 0
+        gray[0:config.dashboard_height, :] = 0
         gray[gray < 250] = 0
 
         lines = cv2.HoughLines(gray, 1, np.pi/180, 150)
@@ -460,7 +486,8 @@ class Action():
         target_y = (y1 + y2) / 2 - 20
 
         logging.debug(f'Kicked to ({target_x}, {target_y})')
-        self.adb.swipe(config.kick_start_loc[0], config.kick_start_loc[1], target_x, target_y, 500)
+        self.adb.swipe(
+            config.kick_start_loc[0], config.kick_start_loc[1], target_x, target_y, 500)
 
         return True
 
@@ -472,25 +499,17 @@ class Action():
         # if corner kick, kick to the header position
         # self.header()
 
-        self.kick_pass(color_image)
-        # else
-        #   execute player location
-        #   matching forward kick template
-        #   if matched
-        #       kick to the safest zone (forward)
-        #   else:   # backward kick
-        #       kick to the safest zone (backword)
-        #   if can't find safe zone
-        #       kick the farthest
+        if self.kick_pass(color_image):
+            return
 
-
-        ## determine direction (forward, backward, goalkick, header)
+        # determine direction (forward, backward, goalkick, header)
         zone = [167, 420, 385, 289]
 
         x = random.randint(zone[0], zone[0] + zone[2])
         y = random.randint(zone[1], zone[1] + zone[3])
 
-        self.adb.swipe(config.kick_start_loc[0], config.kick_start_loc[1], x, y, 500)
+        self.adb.swipe(
+            config.kick_start_loc[0], config.kick_start_loc[1], x, y, 500)
 
     def defend(self, gray_image, color_image):
         logging.info('Implement how to defend')
@@ -501,7 +520,8 @@ class Action():
 
         not_found_count = 0
         while True:
-            matched, score = self.match_template('templates/shootout_defence.png', mask=True, threshold=0.7, diff_threshold=50)
+            matched, score = self.match_template(
+                'templates/shootout_defence.png', mask=True, threshold=0.7, diff_threshold=50)
             if (matched):
                 logging.info('Found shootout defence')
                 self.defend_penalty()
@@ -509,7 +529,8 @@ class Action():
                 time.sleep(1)
                 continue
 
-            matched, score = self.match_template('templates/shootout_offence.png', mask=True, threshold=0.7, diff_threshold=50)
+            matched, score = self.match_template(
+                'templates/shootout_offence.png', mask=True, threshold=0.7, diff_threshold=50)
             if (matched):
                 logging.info('Found shootout offence')
                 self.kick_penalty()
@@ -524,50 +545,190 @@ class Action():
                 logging.info('Finished the shootout')
                 break
 
-    def kick_pass(self, image):
-        my_stats, my_centroids, op_stats, op_centroid = self.get_player_map(image)
+    def kick_pass(self, image: np.ndarray):
+        """Decide where to pass
 
-        # kick start position 에 우리 선수가 있으면, forward 킥
-        # 아니라면 backward 킥
-        #    y좌표 작아지는(커지는) 순서대로 최대 N(=5)개까지 검사
-        #    주변에 상대가 없으면 선택, 킥
-        #    직선거리 주변에 상대가 있으면 무시
+        Args:
+            image (np.ndarray): color image
+            debug (bool, optional): debug mode. Defaults to False.
 
+        Returns:
+            [type]: [description]
+        """
+
+        my_stats, my_centroids, op_stats, op_centroids = self.get_player_map(image)
+
+        # preprocessing: merge into bigger location if location exists in both my and op
+        my_remove_list = []
+        op_remove_list = []
+        for my_index, my_position in enumerate(my_centroids):
+            for op_index, op_position in enumerate(op_centroids):
+                horizontal_dist = abs(my_position[0] - op_position[0])
+                vertial_dist = abs(my_position[1] - op_position[1])
+
+                if horizontal_dist < 10 and vertial_dist < 20:
+                    if my_stats[my_index][4] > op_stats[op_index][4]:
+                        op_remove_list.append(op_index)
+                    else:
+                        my_remove_list.append(my_index)
+
+        my_centroids = np.delete(my_centroids, my_remove_list, axis=0)
+        op_centroids = np.delete(op_centroids, op_remove_list, axis=0)
+
+        if self.debug:
+            result = np.zeros((image.shape[0], image.shape[1], 3), np.uint8)
+
+            for position in my_centroids:
+                cv2.circle(result, tuple(map(int, position)),
+                           10, (255, 0, 0), -1)
+
+            for position in op_centroids:
+                cv2.circle(result, tuple(map(int, position)),
+                           10, (0, 0, 255), -1)
+
+            cv2.imwrite(f'debug\\frame_{self.frame_index}.png', image)
+
+        forward_direction = False
+        forward_index = -1
+        for index, position in enumerate(my_centroids):
+            dist = image_processing.get_distance(
+                position, config.kick_start_loc)
+            if dist < 50:
+                forward_direction = True
+                forward_index = index
+                logging.info(f'Forward kick ({dist})')
+                break
+
+        if forward_direction:
+            max_dist = 0
+            max_index = -1
+            for my_index, my_position in enumerate(my_centroids):
+                if my_index == forward_index:
+                    continue
+
+                min_op_dist = sys.maxsize
+                for op_position in op_centroids:
+                    dist = image_processing.get_distance(
+                        my_position, op_position)
+                    if dist < min_op_dist:
+                        min_op_dist = dist
+
+                logging.debug(
+                    f'Minimum distance between player[{my_index}] and opponents: {min_op_dist}')
+
+                if max_dist < min_op_dist:
+                    max_dist = min_op_dist
+                    max_index = my_index
+
+            logging.debug(
+                f'Decided to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
+
+            if max_index != -1:
+                self.swipe(config.kick_start_loc, my_centroids[max_index])
+
+            if self.debug:
+                cv2.line(result, tuple(config.kick_start_loc), tuple(
+                    map(int, my_centroids[max_index])), (0, 255, 0), 2)
+                cv2.imwrite(f'debug\\result_{self.frame_index}.png', result)
+
+            return True
+
+        backward_direction = False
+        backward_index = -1
+        backward_start_index = -1
+        for index, position in enumerate(my_centroids):
+            for start_index, start_loc in enumerate(config.kick_backward_start_locs):
+                dist = image_processing.get_distance(position, start_loc)
+                if dist < 50:
+                    backward_direction = True
+                    backward_index = index
+                    backward_start_index = start_index
+                    logging.info(f'Backword kick ({dist})')
+                    break
+
+        if backward_direction:
+            max_dist = 0
+            max_index = -1
+            for my_index, my_position in enumerate(my_centroids):
+                if my_index == backward_index:
+                    continue
+
+                min_op_dist = sys.maxsize
+                for op_position in reversed(op_centroids):
+                    dist = image_processing.get_distance(
+                        my_position, op_position)
+                    if dist < min_op_dist:
+                        min_op_dist = dist
+
+                logging.debug(
+                    f'Minimum distance between player[{my_index}] and opponents: {min_op_dist}')
+
+                if max_dist < min_op_dist:
+                    max_dist = min_op_dist
+                    max_index = my_index
+
+            logging.debug(
+                f'Decided to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
+
+            if max_index != -1:
+                self.swipe(
+                    config.kick_backward_start_locs[backward_start_index], my_centroids[max_index])
+
+            if self.debug:
+                cv2.line(result, tuple(config.kick_backward_start_locs[backward_start_index]), tuple(map(int, my_centroids[max_index])), (0, 255, 0), 2)
+                cv2.imwrite(f'debug\\result_{self.frame_index}.png', result)
+
+            return True
+
+        logging.error('Can\'t find both forward and backward kick situation')
+        cv2.imwrite('.debug\\error_image.png', image)
+
+        return False
 
     def get_player_map(self, image):
         image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         image_eh = image_processing.hsv2eh(image_hsv)
 
-        my_uniform_colors = self.estimate_uniform_colors(image_hsv, config.my_uniform_loc)
-        opponent_uniform_colors = self.estimate_uniform_colors(image_hsv, config.opponent_uniform_loc)
+        my_uniform_colors = self.estimate_uniform_colors(
+            image_hsv, config.my_uniform_loc)
+        opponent_uniform_colors = self.estimate_uniform_colors(
+            image_hsv, config.opponent_uniform_loc)
 
-        logging.debug(f'my uniform color: {",".join(map(str, my_uniform_colors))}')
-        logging.debug(f'opponent uniform color: {",".join(map(str, opponent_uniform_colors))}')
+        logging.debug(
+            f'my uniform color: {",".join(map(str, my_uniform_colors))}')
+        logging.debug(
+            f'opponent uniform color: {",".join(map(str, opponent_uniform_colors))}')
 
         my_mask = self.get_player_locations(image_eh, my_uniform_colors)
-        opponent_mask = self.get_player_locations(image_eh, opponent_uniform_colors)
+        opponent_mask = self.get_player_locations(
+            image_eh, opponent_uniform_colors)
 
         # Remove upper watcher region
         my_mask[0:255, :] = 0
         opponent_mask[0:255, :] = 0
 
         # Merge separated player's points, especially for striped uniform
-        kernel = np.ones((3, 3), np.uint8) 
+        kernel = np.ones((3, 3), np.uint8)
         my_mask = cv2.morphologyEx(my_mask, cv2.MORPH_CLOSE, kernel)
-        opponent_mask = cv2.morphologyEx(opponent_mask, cv2.MORPH_CLOSE, kernel)
+        opponent_mask = cv2.morphologyEx(
+            opponent_mask, cv2.MORPH_CLOSE, kernel)
 
         # Remove noise
-        kernel = np.ones((5, 5), np.uint8) 
+        kernel = np.ones((5, 5), np.uint8)
         my_mask_open = cv2.morphologyEx(my_mask, cv2.MORPH_OPEN, kernel)
-        opponent_mask_open = cv2.morphologyEx(opponent_mask, cv2.MORPH_OPEN, kernel)
+        opponent_mask_open = cv2.morphologyEx(
+            opponent_mask, cv2.MORPH_OPEN, kernel)
 
         # Merge separated player's parts, i.e. body and leg
-        kernel = np.ones((15, 15), np.uint8) 
+        kernel = np.ones((15, 15), np.uint8)
         my_mask_close = cv2.morphologyEx(my_mask_open, cv2.MORPH_CLOSE, kernel)
-        opponent_mask_close = cv2.morphologyEx(opponent_mask_open, cv2.MORPH_CLOSE, kernel)
+        opponent_mask_close = cv2.morphologyEx(
+            opponent_mask_open, cv2.MORPH_CLOSE, kernel)
 
-        _, _, my_stats, my_centroid = cv2.connectedComponentsWithStats(my_mask_close)
-        _, _, op_stats, op_centroid = cv2.connectedComponentsWithStats(opponent_mask_close)
+        _, _, my_stats, my_centroid = cv2.connectedComponentsWithStats(
+            my_mask_close)
+        _, _, op_stats, op_centroid = cv2.connectedComponentsWithStats(
+            opponent_mask_close)
 
 #        cv2.imshow('frame', image)
 #        cv2.imshow('my', my_mask)
@@ -585,19 +746,24 @@ class Action():
     def test(self):
         import glob
         for path in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shootout\defence\*.png')):
-            matched, score = self.match_template('templates/shootout_defence.png', mask=True)
+            matched, score = self.match_template(
+                'templates/shootout_defence.png', mask=True)
             logging.info(f'{path} {matched} {score}')
 
         for path in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shootout\offence\*.png')):
-            matched, score = self.match_template('templates/shootout_offence.png', mask=True)
+            matched, score = self.match_template(
+                'templates/shootout_offence.png', mask=True)
             logging.info(f'{path} {matched} {score}')
 
     def estimate_uniform_colors(self, image_hsv, uniform_loc):
-        uniform_eh = image_processing.hsv2eh(image_processing.crop(image_hsv, uniform_loc))
-        uniform_mask = cv2.imread('templates/uniform_mask.png', cv2.IMREAD_GRAYSCALE)
+        uniform_eh = image_processing.hsv2eh(
+            image_processing.crop(image_hsv, uniform_loc))
+        uniform_mask = cv2.imread(
+            'templates/uniform_mask.png', cv2.IMREAD_GRAYSCALE)
 
         uniform_masked = np.ma.masked_array(uniform_eh, uniform_mask == 0)
-        values, counts = np.unique(uniform_masked.astype('uint16'), return_counts=True)
+        values, counts = np.unique(
+            uniform_masked.astype('uint16'), return_counts=True)
 
         uniform_pixels = np.count_nonzero(uniform_mask)
 
@@ -616,12 +782,12 @@ class Action():
         for color in uniform_colors:
             if color < 180:
                 if color >= 178:
-                    upper_margin = 179 - color 
+                    upper_margin = 179 - color
                 else:
                     upper_margin = 2
 
                 if color <= 1:
-                    lower_margin = color 
+                    lower_margin = color
                 else:
                     lower_margin = 2
             else:
@@ -635,7 +801,8 @@ class Action():
                 else:
                     lower_margin = 15
 
-            cur_mask = cv2.inRange(image_eh, np.array(color - lower_margin, dtype=np.uint16), np.array(color + upper_margin, dtype=np.uint16))
+            cur_mask = cv2.inRange(image_eh, np.array(
+                color - lower_margin, dtype=np.uint16), np.array(color + upper_margin, dtype=np.uint16))
             mask = cv2.bitwise_or(mask, cur_mask)
 
         return mask
@@ -649,38 +816,47 @@ class Action():
     def test3(self):
         import glob
         for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
-#        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
+            #        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
             image = cv2.imread(file)
             image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
             image_eh = image_processing.hsv2eh(image_hsv)
 
-            my_uniform_colors = self.estimate_uniform_colors(image_hsv, config.my_uniform_loc)
-            opponent_uniform_colors = self.estimate_uniform_colors(image_hsv, config.opponent_uniform_loc)
+            my_uniform_colors = self.estimate_uniform_colors(
+                image_hsv, config.my_uniform_loc)
+            opponent_uniform_colors = self.estimate_uniform_colors(
+                image_hsv, config.opponent_uniform_loc)
 
-            logging.info(f'my uniform color: {",".join(map(str, my_uniform_colors))}')
-            logging.info(f'opponent uniform color: {",".join(map(str, opponent_uniform_colors))}')
+            logging.info(
+                f'my uniform color: {",".join(map(str, my_uniform_colors))}')
+            logging.info(
+                f'opponent uniform color: {",".join(map(str, opponent_uniform_colors))}')
 
             my_mask = self.get_player_locations(image_eh, my_uniform_colors)
-            opponent_mask = self.get_player_locations(image_eh, opponent_uniform_colors)
+            opponent_mask = self.get_player_locations(
+                image_eh, opponent_uniform_colors)
 
             # Remove upper watcher region
             my_mask[0:255, :] = 0
             opponent_mask[0:255, :] = 0
 
             # Merge separated player's points, especially for striped uniform
-            kernel = np.ones((3, 3), np.uint8) 
+            kernel = np.ones((3, 3), np.uint8)
             my_mask = cv2.morphologyEx(my_mask, cv2.MORPH_CLOSE, kernel)
-            opponent_mask = cv2.morphologyEx(opponent_mask, cv2.MORPH_CLOSE, kernel)
+            opponent_mask = cv2.morphologyEx(
+                opponent_mask, cv2.MORPH_CLOSE, kernel)
 
             # Remove noise
-            kernel = np.ones((5, 5), np.uint8) 
+            kernel = np.ones((5, 5), np.uint8)
             my_mask_open = cv2.morphologyEx(my_mask, cv2.MORPH_OPEN, kernel)
-            opponent_mask_open = cv2.morphologyEx(opponent_mask, cv2.MORPH_OPEN, kernel)
+            opponent_mask_open = cv2.morphologyEx(
+                opponent_mask, cv2.MORPH_OPEN, kernel)
 
             # Merge separated player's parts, i.e. body and leg
-            kernel = np.ones((25, 25), np.uint8) 
-            my_mask_close = cv2.morphologyEx(my_mask_open, cv2.MORPH_CLOSE, kernel)
-            opponent_mask_close = cv2.morphologyEx(opponent_mask_open, cv2.MORPH_CLOSE, kernel)
+            kernel = np.ones((25, 25), np.uint8)
+            my_mask_close = cv2.morphologyEx(
+                my_mask_open, cv2.MORPH_CLOSE, kernel)
+            opponent_mask_close = cv2.morphologyEx(
+                opponent_mask_open, cv2.MORPH_CLOSE, kernel)
 
             cv2.imshow('frame', image)
             cv2.imshow('my', my_mask)
@@ -690,5 +866,3 @@ class Action():
             cv2.imshow('my3', my_mask_close)
             cv2.imshow('op3', opponent_mask_close)
             cv2.waitKey(0)
-
-

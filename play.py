@@ -2,9 +2,11 @@ import time
 import logging
 
 from action import Action
+import config
 
 def main():
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
 
     action = Action()
 
