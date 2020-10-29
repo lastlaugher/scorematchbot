@@ -374,32 +374,33 @@ class Action():
 
             time.sleep(1)
 
-        relagation_matched, _ = self.match_template(
-            'templates/okay.png', config.okay_loc)
-        promotion_package_matched, _ = self.match_template(
-            'templates/promotion_package.png', config.promotion_package_loc)
-
-        if relagation_matched:
+        matched, _ = self.match_template('templates/okay.png', config.okay_loc)
+        if matched:
             logging.info('Relagation. Touch okay')
             self.touch_box(config.okay_loc)
         else:
-            if promotion_package_matched:
+            matched, _ = self.match_template(
+                'templates/promotion_package.png', config.promotion_package_loc)
+            if matched:
                 logging.info('Promotion pakcage. Touch close')
                 self.touch(config.promotion_package_close_loc)
 
-            logging.info('Accepting video package')
-            self.touch(config.video_package_play_loc)
-
-            logging.info('Playing video')
-            time.sleep(60)
-
-            logging.info('Finished playing video')
-            self.touch(config.video_package_close_loc)
-            self.touch(config.free_collect_end_loc)
-            time.sleep(3)
-
-            logging.info('Opening cards')
-            self.open_cards()
+            matched, _ = self.match_template(
+                'templates/video_package.png', config.video_package_loc)
+            if matched:
+                logging.info('Accepting video package')
+                self.touch(config.video_package_play_loc)
+    
+                logging.info('Playing video')
+                time.sleep(60)
+    
+                logging.info('Finished playing video')
+                self.touch(config.video_package_close_loc)
+                self.touch(config.free_collect_end_loc)
+                time.sleep(3)
+    
+                logging.info('Opening cards')
+                self.open_cards()
 
         time.sleep(3)
 

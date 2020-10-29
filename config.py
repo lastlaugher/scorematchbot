@@ -51,9 +51,12 @@ no_opponent_ok_loc = [360, 780]
 
 bid_loc = [50, 880, 619, 181]
 game_end_loc = [587, 1148, 116, 123]
+
+video_package_loc = [227, 497, 264, 48]
 video_package_cancel_loc = [200, 800]
 video_package_play_loc = [530, 800]
 video_package_close_loc = [48, 48]
+
 my_photo_loc = [128, 20, 93, 112]
 opponent_photo_loc = [498, 20, 93, 112]
 
