@@ -1,6 +1,8 @@
 import time
 import logging
 import random
+import shutil
+import os
 
 import cv2
 import numpy as np
@@ -17,6 +19,10 @@ class Action():
         self.adb = Adb()
         self.debug = debug
         self.frame_index = 0
+
+        if debug:
+            shutil.rmtree('debug')
+            os.makedirs('debug')
 
     def match_template(
             self,
@@ -310,7 +316,7 @@ class Action():
             photo_loc[0]:photo_loc[0] + photo_loc[2]
         ]
 
-        idx = 0
+        self.frame_index = 0
         while True:
             color_image = self.adb.get_screen()
 
@@ -342,18 +348,16 @@ class Action():
                 diff_image, config.opponent_photo_loc)
 
             if np.sum(my_photo_diff) != 0:
-                logging.info(f'{idx} My turn to kick')
+                logging.info(f'{self.frame_index} My turn to kick')
                 self.kick(gray_image, color_image)
             elif np.sum(opponent_photo_diff) != 0:
-                logging.info(f'{idx} Opponent\'s turn to kick')
+                logging.info(f'{self.frame_index} Opponent\'s turn to kick')
                 self.defend(gray_image, color_image)
             else:
-                logging.info(f'{idx} In-progress')
-
-            cv2.imwrite(f'.debug/frame_{idx:05d}.png', diff_image)
+                logging.info(f'{self.frame_index} In-progress')
 
             prev_image = cur_image
-            idx += 1
+            self.frame_index += 1
 
         while True:
             logging.info('Trying to find shootout')
@@ -390,15 +394,15 @@ class Action():
             if matched:
                 logging.info('Accepting video package')
                 self.touch(config.video_package_play_loc)
-    
+
                 logging.info('Playing video')
                 time.sleep(60)
-    
+
                 logging.info('Finished playing video')
                 self.touch(config.video_package_close_loc)
                 self.touch(config.free_collect_end_loc)
                 time.sleep(3)
-    
+
                 logging.info('Opening cards')
                 self.open_cards()
 
@@ -503,7 +507,6 @@ class Action():
         if self.kick_pass(color_image):
             return
 
-        # determine direction (forward, backward, goalkick, header)
         zone = [167, 420, 385, 289]
 
         x = random.randint(zone[0], zone[0] + zone[2])
@@ -682,7 +685,7 @@ class Action():
             return True
 
         logging.error('Can\'t find both forward and backward kick situation')
-        cv2.imwrite('.debug\\error_image.png', image)
+        cv2.imwrite(f'debug\\error_image_{self.frame_index}.png', image)
 
         return False
 
