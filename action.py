@@ -20,8 +20,14 @@ class Action():
         self.debug = debug
         self.frame_index = 0
 
+        self.forward_kick_mask = cv2.imread('templates/forward_kick_mask.png', cv2.IMREAD_GRAYSCALE)
+        self.backward_kick_masks = [
+            cv2.imread('templates/backward_kick_mask_1.png', cv2.IMREAD_GRAYSCALE),
+            cv2.imread('templates/backward_kick_mask_2.png', cv2.IMREAD_GRAYSCALE),
+        ]
+
         if debug:
-            shutil.rmtree('debug')
+            shutil.rmtree('debug', ignore_errors=True)
             os.makedirs('debug')
 
     def match_template(
@@ -153,7 +159,7 @@ class Action():
                 time.sleep(3)
                 break
 
-    def open_cards(self):
+    def open_cards(self, restart_on_error=True):
         if self.sign_in():
             return
 
@@ -197,11 +203,15 @@ class Action():
 
             idx += 1
 
-            if idx > 30:
+            if idx > 20:
                 logging.error(
-                    'Can\'t find the okay button during 30 iterations')
-                self.adb.restart_app()
-                logging.info('App is restarted')
+                    'Can\'t find the okay button during 20 iterations')
+
+                if restart_on_error:
+                    self.adb.restart_app()
+                    logging.info('App is restarted')
+                    time.sleep(10)
+
                 break
 
     def kick_penalty(self):
@@ -270,7 +280,8 @@ class Action():
 
         logging.info('Finding an opponent')
         while True:
-            self.sign_in()
+            if self.sign_in():
+                return
 
             logging.info(f'Trying to find support screen')
             matched, score = self.match_template(
@@ -329,7 +340,7 @@ class Action():
 
             logging.info('Trying to find time out screen')
             matched, score = self.match_template(
-                'templates/timeout.png', config.timeout_loc, mask=True, threshold=0.9, image=color_image)
+                'templates/timeout.png', config.timeout_loc, mask=True, threshold=0.95, image=color_image)
             if matched:
                 logging.info(f'Timeout ({score})')
                 break
@@ -404,7 +415,7 @@ class Action():
                 time.sleep(3)
 
                 logging.info('Opening cards')
-                self.open_cards()
+                self.open_cards(restart_on_error=False)
 
         time.sleep(3)
 
@@ -449,6 +460,10 @@ class Action():
 
         if rho > 600:
             logging.debug('It seems the goal post is mine')
+            return False
+
+        if np.sin(theta) == 0:
+            logging.debug('sin(theta) == 0')
             return False
 
         a = -np.cos(theta) / np.sin(theta)
@@ -512,6 +527,7 @@ class Action():
         x = random.randint(zone[0], zone[0] + zone[2])
         y = random.randint(zone[1], zone[1] + zone[3])
 
+        logging.info(f'Random kick from {config.kick_start_loc} to ({x}, {y})')
         self.adb.swipe(
             config.kick_start_loc[0], config.kick_start_loc[1], x, y, 500)
 
@@ -566,7 +582,15 @@ class Action():
         my_remove_list = []
         op_remove_list = []
         for my_index, my_position in enumerate(my_centroids):
+            if my_stats[my_index][4] > 1000:
+                my_remove_list.append(my_index)
+                continue
+
             for op_index, op_position in enumerate(op_centroids):
+                if op_stats[op_index][4] > 1000:
+                    op_remove_list.append(op_index)
+                    continue
+
                 horizontal_dist = abs(my_position[0] - op_position[0])
                 vertial_dist = abs(my_position[1] - op_position[1])
 
@@ -610,6 +634,10 @@ class Action():
                 if my_index == forward_index:
                     continue
 
+                pos = list(map(int, my_position))
+                if self.forward_kick_mask[pos[1], pos[0]] == 0:
+                    continue
+
                 min_op_dist = sys.maxsize
                 for op_position in op_centroids:
                     dist = image_processing.get_distance(
@@ -624,11 +652,14 @@ class Action():
                     max_dist = min_op_dist
                     max_index = my_index
 
+            if max_index == -1:
+                logging.warning('Can\'t find proper player')
+                return False
+
             logging.debug(
                 f'Decided to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
 
-            if max_index != -1:
-                self.swipe(config.kick_start_loc, my_centroids[max_index])
+            self.swipe(config.kick_start_loc, my_centroids[max_index])
 
             if self.debug:
                 cv2.line(result, tuple(config.kick_start_loc), tuple(
@@ -657,6 +688,10 @@ class Action():
                 if my_index == backward_index:
                     continue
 
+                pos = list(map(int, my_position))
+                if self.backward_kick_masks[backward_start_index][pos[1], pos[0]] == 0:
+                    continue
+
                 min_op_dist = sys.maxsize
                 for op_position in reversed(op_centroids):
                     dist = image_processing.get_distance(
@@ -671,12 +706,15 @@ class Action():
                     max_dist = min_op_dist
                     max_index = my_index
 
+            if max_index == -1:
+                logging.warning('Can\'t find proper player')
+                return False
+
             logging.debug(
                 f'Decided to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
 
-            if max_index != -1:
-                self.swipe(
-                    config.kick_backward_start_locs[backward_start_index], my_centroids[max_index])
+            self.swipe(
+                config.kick_backward_start_locs[backward_start_index], my_centroids[max_index])
 
             if self.debug:
                 cv2.line(result, tuple(config.kick_backward_start_locs[backward_start_index]), tuple(map(int, my_centroids[max_index])), (0, 255, 0), 2)
@@ -724,7 +762,7 @@ class Action():
             opponent_mask, cv2.MORPH_OPEN, kernel)
 
         # Merge separated player's parts, i.e. body and leg
-        kernel = np.ones((15, 15), np.uint8)
+        kernel = np.ones((30, 30), np.uint8)
         my_mask_close = cv2.morphologyEx(my_mask_open, cv2.MORPH_CLOSE, kernel)
         opponent_mask_close = cv2.morphologyEx(
             opponent_mask_open, cv2.MORPH_CLOSE, kernel)

@@ -8,7 +8,7 @@ def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
 
-    action = Action()
+    action = Action(debug=True)
 
     while True:
         action.play_game()
