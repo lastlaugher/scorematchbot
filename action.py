@@ -458,7 +458,8 @@ class Action():
         index = 0 if len(lines) == 1 else 1
         rho, theta = sorted(lines, key=lambda x: x[0][0])[index][0]
 
-        if rho > 600:
+        logging.debug(f'rho: {rho} theta: {theta}')
+        if rho > 700:
             logging.debug('It seems the goal post is mine')
             return False
 
@@ -492,10 +493,16 @@ class Action():
                 continue
 
             if gray[y, x] > 0:
-                logging.debug(f'({x}, {y}), is enging point of goal post')
+                logging.debug(f'({x}, {y}), is ending point of goal post')
                 x2 = x
                 y2 = y
                 break
+
+        goal_post_length = image_processing.get_distance([x1, y1], [x2, y2])
+        logging.debug(f'Goal post length: {goal_post_length}')
+        if goal_post_length < 150:
+            logging.debug('Goal post is far. Give up shooting')
+            return False
 
         center = config.screen_size[1] / 2
         if abs(x1 - center) > abs(x2 - center):
@@ -506,6 +513,7 @@ class Action():
         target_y = (y1 + y2) / 2 - 20
 
         logging.debug(f'Kicked to ({target_x}, {target_y})')
+
         self.adb.swipe(
             config.kick_start_loc[0], config.kick_start_loc[1], target_x, target_y, 500)
 
