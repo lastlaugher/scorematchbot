@@ -557,7 +557,7 @@ class Action():
             config.kick_start_loc[0], config.kick_start_loc[1], x, y, 500)
 
     def defend(self, gray_image, color_image):
-        logging.info('Implement how to defend')
+        logging.debug('Implement how to defend')
         pass
 
     def play_shootout(self):
