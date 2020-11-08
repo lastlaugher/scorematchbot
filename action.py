@@ -26,9 +26,12 @@ class Action():
             cv2.imread('templates/backward_kick_mask_2.png', cv2.IMREAD_GRAYSCALE),
         ]
 
-        if debug:
+    def clean_debug_dir(self):
+        try:
             shutil.rmtree('debug', ignore_errors=True)
             os.makedirs('debug')
+        except:
+            pass
 
     def match_template(
             self,
@@ -161,7 +164,7 @@ class Action():
 
     def open_cards(self, restart_on_error=True):
         if self.sign_in():
-            return
+            return False
 
         idx = 0
         while True:
@@ -212,7 +215,9 @@ class Action():
                     logging.info('App is restarted')
                     time.sleep(10)
 
-                break
+                return False
+
+        return True
 
     def kick_penalty(self):
         locations = [
@@ -268,6 +273,8 @@ class Action():
                 self.open_cards()
 
     def play_game(self):
+        self.clean_debug_dir()
+
         logging.info('Starting game')
 
         logging.info('Entering arena')
@@ -279,6 +286,7 @@ class Action():
         time.sleep(3)
 
         logging.info('Finding an opponent')
+        index = 0
         while True:
             if self.sign_in():
                 return
@@ -312,6 +320,14 @@ class Action():
                 logging.info(f'Bid stage ({score})')
                 time.sleep(5)
                 break
+
+            index += 1
+
+            if index > 50:
+                logging.info('Something\'s wrong. Restart the app')
+                self.adb.restart_app()
+
+                return
 
         logging.info('Game starated')
         prev_image = self.adb.get_screen(color=False)
@@ -401,10 +417,10 @@ class Action():
                 self.touch(config.promotion_package_close_loc)
 
             matched, _ = self.match_template(
-                'templates/video_package.png', config.video_package_loc)
+                'templates/watch_video.png', config.watch_video_loc)
             if matched:
                 logging.info('Accepting video package')
-                self.touch(config.video_package_play_loc)
+                self.touch_box(config.watch_video_loc)
 
                 logging.info('Playing video')
                 time.sleep(60)
@@ -415,7 +431,8 @@ class Action():
                 time.sleep(3)
 
                 logging.info('Opening cards')
-                self.open_cards(restart_on_error=False)
+                if not self.open_cards():
+                    return
 
         time.sleep(3)
 
