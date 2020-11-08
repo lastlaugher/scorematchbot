@@ -52,3 +52,4 @@ class Adb():
         self.stop_app()
         time.sleep(5)
         self.start_app()
+        time.sleep(5)

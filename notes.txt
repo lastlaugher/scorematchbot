@@ -1,16 +1,29 @@
 test status
 
-large package v
+large package v (0.91)
 small package v (0.89)
 free collect v (1.0)
-open rewards v (0.85)
+open rewards v (0.99)
 open rewards template v (0.84)
 
 open1 v (0.86)
-open2
-open3
-open4
+open2 v (0.81)
+open3 v (1.0)
+open4 v (0.81)
 unlock1 v (0.83)
-unlock2
+unlock2 v (0.76)
 unlock3 v (1.0)
-unlock4
+unlock4 v (0.76)
+
+
+todo
+- kick
+  v check the target is within valid range (using mask)
+  - issue: handle goal kick and header
+  - instead of max of min distance, decide safe path
+    - no opponent during the path
+  - Prevent shoot when the goal post size is less than threshold
+  - Add backword and header random kick 
+  - debug fail cases
+  - corner kick - header
+  - kick off - kick to the goal keeper

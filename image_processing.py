@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
+import math as m
 
-def diff_image(image1: np.ndarray, image2: np.ndarray, mask: np.ndarray = None, color: bool = True):
+def diff_image(image1: np.ndarray, image2: np.ndarray, mask: np.ndarray = None, color: bool = True, diff_threshold: int = 0):
     if not color:
         image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
@@ -11,6 +12,8 @@ def diff_image(image1: np.ndarray, image2: np.ndarray, mask: np.ndarray = None, 
         diff = np.abs(image1[mask > 0] - image2[mask > 0])
     else:
         diff = np.abs(image1 - image2)
+
+    diff[diff < diff_threshold] = 0
 
     counter = dict(zip(*np.unique(diff, return_counts=True)))
 
@@ -54,3 +57,10 @@ def hsv2eh(image: np.ndarray):
         eh[y, x] = int(image[y, x, 2] / 255 * (255 - 180)) + 180 
 
     return eh
+
+def get_distance(vector1: [], vector2: []):
+    sum = 0
+    for item1, item2 in zip(vector1, vector2):
+        sum += (item1 - item2) ** 2
+
+    return m.sqrt(sum)
