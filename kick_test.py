@@ -13,11 +13,13 @@ def main():
 
     action = Action(debug=True)
 
-    for image in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\kick\*.png')):
+    for image in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shoot\*.png')):
         img_color = cv2.imread(image)
         img_gray = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
         action.kick(img_gray, img_color)
         action.frame_index += 1
+        cv2.imshow('x', img_color)
+        cv2.waitKey(0)
 
 if __name__ == '__main__':
     main()
