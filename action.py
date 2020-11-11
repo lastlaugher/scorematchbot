@@ -477,8 +477,8 @@ class Action():
         rho, theta = sorted(lines, key=lambda x: x[0][0])[index][0]
 
         logging.debug(f'rho: {rho} theta: {theta}')
-        if rho > 700:
-            logging.debug('It seems the goal post is mine')
+        if rho > 700 or theta < 1.0 or theta > 2.2:
+            logging.debug('The goal post position is not valid')
             return False
 
         if np.sin(theta) == 0:
