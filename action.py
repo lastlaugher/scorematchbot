@@ -461,6 +461,7 @@ class Action():
         5. find upper goal post
         6. shoot to the farther corner
         '''
+        logging.info('Check if it\'s shoot chance')
         gray = gray_image.copy()
 
         gray[0:config.dashboard_height, :] = 0
@@ -469,7 +470,7 @@ class Action():
         lines = cv2.HoughLines(gray, 1, np.pi/180, 150)
 
         if lines is None or len(lines) == 0:
-            logging.debug('There is no line')
+            logging.info('There is no goal post')
             return False
 
         index = 0 if len(lines) == 1 else 1
@@ -518,7 +519,7 @@ class Action():
         goal_post_length = image_processing.get_distance([x1, y1], [x2, y2])
         logging.debug(f'Goal post length: {goal_post_length}')
         if goal_post_length < 150:
-            logging.debug('Goal post is far. Give up shooting')
+            logging.info(f'Goal post is far ({goal_post_length}). Give up shooting')
             return False
 
         center = config.screen_size[1] / 2
@@ -529,7 +530,7 @@ class Action():
 
         target_y = (y1 + y2) / 2 - 20
 
-        logging.debug(f'Kicked to ({target_x}, {target_y})')
+        logging.info(f'Shot to ({target_x}, {target_y})')
 
         self.adb.swipe(
             config.kick_start_loc[0], config.kick_start_loc[1], target_x, target_y, 500)
@@ -681,8 +682,8 @@ class Action():
                 logging.warning('Can\'t find proper player')
                 return False
 
-            logging.debug(
-                f'Decided to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
+            logging.info(
+                f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
 
             self.swipe(config.kick_start_loc, my_centroids[max_index])
 
@@ -735,8 +736,8 @@ class Action():
                 logging.warning('Can\'t find proper player')
                 return False
 
-            logging.debug(
-                f'Decided to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
+            logging.info(
+                f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
 
             self.swipe(
                 config.kick_backward_start_locs[backward_start_index], my_centroids[max_index])
