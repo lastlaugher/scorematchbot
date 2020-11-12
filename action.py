@@ -405,24 +405,29 @@ class Action():
 
             time.sleep(1)
 
+        time.sleep(3)
+
+        logging.info('Trying to find relagation screen')
         matched, _ = self.match_template('templates/okay.png', config.okay_loc)
         if matched:
             logging.info('Relagation. Touch okay')
             self.touch_box(config.okay_loc)
         else:
+            logging.info('Trying to find promotion package screen')
             matched, _ = self.match_template(
                 'templates/promotion_package.png', config.promotion_package_loc)
             if matched:
                 logging.info('Promotion pakcage. Touch close')
                 self.touch(config.promotion_package_close_loc)
 
+            logging.info('Trying to find video watch screen')
             matched, _ = self.match_template(
                 'templates/watch_video.png', config.watch_video_loc)
             if matched:
                 logging.info('Accepting video package')
                 self.touch_box(config.watch_video_loc)
 
-                logging.info('Playing video')
+                logging.info('Playing video for 60 secs')
                 time.sleep(60)
 
                 logging.info('Finished playing video')
@@ -433,6 +438,8 @@ class Action():
                 logging.info('Opening cards')
                 if not self.open_cards():
                     return
+            else:
+                logging.info('There is no video watch')
 
         time.sleep(3)
 
