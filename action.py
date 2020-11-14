@@ -823,16 +823,6 @@ class Action():
         _, _, op_stats, op_centroid = cv2.connectedComponentsWithStats(
             opponent_mask_close)
 
-#        cv2.imshow('frame', image)
-#        cv2.imshow('my', my_mask)
-#        cv2.imshow('op', opponent_mask)
-#        cv2.imshow('my2', my_mask_open)
-#        cv2.imshow('op2', opponent_mask_open)
-#        cv2.imshow('my3', my_mask_close)
-#        cv2.imshow('op3', opponent_mask_close)
-#
-#        cv2.waitKey(0)
-
         # Remove the first element which covers entire screen
         return my_stats[1:], my_centroid[1:], op_stats[1:], op_centroid[1:]
 
