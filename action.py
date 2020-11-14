@@ -555,14 +555,26 @@ class Action():
         if self.kick_pass(color_image):
             return
 
-        zone = [167, 420, 385, 289]
+        # random kick
+        for kick in ['forward', 'backward', 'header']:
+            if kick == 'forward':
+                zone = [167, 420, 385, 289]
+                kick_start_x = config.kick_start_loc[0]
+                kick_start_y = config.kick_start_loc[1]
+            elif kick == 'backward':
+                zone = [0, 685, 718, 175]
+                kick_start_x = config.kick_backward_start_locs[1][0]
+                kick_start_y = config.kick_backward_start_locs[1][1]
+            elif kick == 'header':
+                zone = [215, 501, 298, 244]
+                kick_start_x = config.kick_start_loc[0]
+                kick_start_y = config.kick_start_loc[1]
 
-        x = random.randint(zone[0], zone[0] + zone[2])
-        y = random.randint(zone[1], zone[1] + zone[3])
+            x = random.randint(zone[0], zone[0] + zone[2])
+            y = random.randint(zone[1], zone[1] + zone[3])
 
-        logging.info(f'Random kick from {config.kick_start_loc} to ({x}, {y})')
-        self.adb.swipe(
-            config.kick_start_loc[0], config.kick_start_loc[1], x, y, 500)
+            logging.info(f'Random {kick} kick from ({kick_start_x}, {kick_start_y}) to ({x}, {y})')
+            self.adb.swipe(kick_start_x, kick_start_y, x, y, 500)
 
     def defend(self, gray_image, color_image):
         logging.debug('Implement how to defend')
