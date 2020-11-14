@@ -836,18 +836,6 @@ class Action():
         # Remove the first element which covers entire screen
         return my_stats[1:], my_centroid[1:], op_stats[1:], op_centroid[1:]
 
-    def test(self):
-        import glob
-        for path in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shootout\defence\*.png')):
-            matched, score = self.match_template(
-                'templates/shootout_defence.png', mask=True)
-            logging.info(f'{path} {matched} {score}')
-
-        for path in sorted(glob.glob(r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shootout\offence\*.png')):
-            matched, score = self.match_template(
-                'templates/shootout_offence.png', mask=True)
-            logging.info(f'{path} {matched} {score}')
-
     def estimate_uniform_colors(self, image_hsv, uniform_loc):
         uniform_eh = image_processing.hsv2eh(
             image_processing.crop(image_hsv, uniform_loc))
@@ -899,63 +887,3 @@ class Action():
             mask = cv2.bitwise_or(mask, cur_mask)
 
         return mask
-
-    def test2(self):
-        import glob
-        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
-            image = cv2.imread(file)
-            self.get_player_map(image)
-
-    def test3(self):
-        import glob
-        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/kick/*')):
-            #        for file in sorted(glob.glob('C:/Users/HOME/Pictures/MEmu Photo/Screenshots/reverse/*')):
-            image = cv2.imread(file)
-            image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            image_eh = image_processing.hsv2eh(image_hsv)
-
-            my_uniform_colors = self.estimate_uniform_colors(
-                image_hsv, config.my_uniform_loc)
-            opponent_uniform_colors = self.estimate_uniform_colors(
-                image_hsv, config.opponent_uniform_loc)
-
-            logging.info(
-                f'my uniform color: {",".join(map(str, my_uniform_colors))}')
-            logging.info(
-                f'opponent uniform color: {",".join(map(str, opponent_uniform_colors))}')
-
-            my_mask = self.get_player_locations(image_eh, my_uniform_colors)
-            opponent_mask = self.get_player_locations(
-                image_eh, opponent_uniform_colors)
-
-            # Remove upper watcher region
-            my_mask[0:255, :] = 0
-            opponent_mask[0:255, :] = 0
-
-            # Merge separated player's points, especially for striped uniform
-            kernel = np.ones((3, 3), np.uint8)
-            my_mask = cv2.morphologyEx(my_mask, cv2.MORPH_CLOSE, kernel)
-            opponent_mask = cv2.morphologyEx(
-                opponent_mask, cv2.MORPH_CLOSE, kernel)
-
-            # Remove noise
-            kernel = np.ones((5, 5), np.uint8)
-            my_mask_open = cv2.morphologyEx(my_mask, cv2.MORPH_OPEN, kernel)
-            opponent_mask_open = cv2.morphologyEx(
-                opponent_mask, cv2.MORPH_OPEN, kernel)
-
-            # Merge separated player's parts, i.e. body and leg
-            kernel = np.ones((25, 25), np.uint8)
-            my_mask_close = cv2.morphologyEx(
-                my_mask_open, cv2.MORPH_CLOSE, kernel)
-            opponent_mask_close = cv2.morphologyEx(
-                opponent_mask_open, cv2.MORPH_CLOSE, kernel)
-
-            cv2.imshow('frame', image)
-            cv2.imshow('my', my_mask)
-            cv2.imshow('op', opponent_mask)
-            cv2.imshow('my2', my_mask_open)
-            cv2.imshow('op2', opponent_mask_open)
-            cv2.imshow('my3', my_mask_close)
-            cv2.imshow('op3', opponent_mask_close)
-            cv2.waitKey(0)
