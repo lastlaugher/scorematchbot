@@ -3,6 +3,7 @@ import logging
 import random
 import shutil
 import os
+import datetime
 
 import cv2
 import numpy as np
@@ -26,12 +27,12 @@ class Action():
             cv2.imread('templates/backward_kick_mask_2.png', cv2.IMREAD_GRAYSCALE),
         ]
 
-    def clean_debug_dir(self):
-        try:
-            shutil.rmtree('debug', ignore_errors=True)
-            os.makedirs('debug')
-        except:
-            pass
+        self.debug_dir = os.path.join(debug, f'_{datetime.datetime.now():%Y%m%d%H%M%S}')
+        if debug:
+            create_debug_dir()
+
+    def create_debug_dir(self):
+        os.makedirs(self.debug_dir, exist_ok=True)
 
     def match_template(
             self,
@@ -273,7 +274,7 @@ class Action():
                 self.open_cards()
 
     def play_game(self):
-        self.clean_debug_dir()
+        self.create_debug_dir()
 
         logging.info('Starting game')
 
@@ -659,7 +660,7 @@ class Action():
                 cv2.circle(result, tuple(map(int, position)),
                            10, (0, 0, 255), -1)
 
-            cv2.imwrite(f'debug\\frame_{self.frame_index}.png', image)
+            cv2.imwrite(f'{self.debug_dir}\\frame_{self.frame_index}.png', image)
 
         forward_direction = False
         forward_index = -1
@@ -709,7 +710,7 @@ class Action():
             if self.debug:
                 cv2.line(result, tuple(config.kick_start_loc), tuple(
                     map(int, my_centroids[max_index])), (0, 255, 0), 2)
-                cv2.imwrite(f'debug\\result_{self.frame_index}.png', result)
+                cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
 
             return True
 
@@ -763,18 +764,23 @@ class Action():
 
             if self.debug:
                 cv2.line(result, tuple(config.kick_backward_start_locs[backward_start_index]), tuple(map(int, my_centroids[max_index])), (0, 255, 0), 2)
-                cv2.imwrite(f'debug\\result_{self.frame_index}.png', result)
+                cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
 
             return True
 
         logging.error('Can\'t find both forward and backward kick situation')
-        cv2.imwrite(f'debug\\error_image_{self.frame_index}.png', image)
+        cv2.imwrite(f'{self.debug_dir}\\error_image_{self.frame_index}.png', image)
 
         return False
 
     def get_player_map(self, image):
         image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         image_eh = image_processing.hsv2eh(image_hsv)
+
+        # mask for the green playground
+        playground_mask = cv2.inRange(image_eh, np.array(45, dtype=np.uint16), np.array(55, dtype=np.uint16))
+        playground_mask = cv2.morphologyEx(playground_mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+        playground_mask = cv2.morphologyEx(playground_mask, cv2.MORPH_CLOSE, np.ones((55, 55), np.uint8))
 
         my_uniform_colors = self.estimate_uniform_colors(
             image_hsv, config.my_uniform_loc)
@@ -790,9 +796,9 @@ class Action():
         opponent_mask = self.get_player_locations(
             image_eh, opponent_uniform_colors)
 
-        # Remove upper watcher region
-        my_mask[0:255, :] = 0
-        opponent_mask[0:255, :] = 0
+        # Remove non-playground region
+        my_mask = cv2.bitwise_and(my_mask, playground_mask)
+        opponent_mask = cv2.bitwise_and(opponent_mask, playground_mask)
 
         # Merge separated player's points, especially for striped uniform
         kernel = np.ones((3, 3), np.uint8)
