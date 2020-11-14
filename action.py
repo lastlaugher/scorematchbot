@@ -27,12 +27,12 @@ class Action():
             cv2.imread('templates/backward_kick_mask_2.png', cv2.IMREAD_GRAYSCALE),
         ]
 
-        self.debug_dir = os.path.join(debug, f'_{datetime.datetime.now():%Y%m%d%H%M%S}')
-        if debug:
-            create_debug_dir()
+        self.debug_dir = os.path.join('debug', f'{datetime.datetime.now():%Y%m%d%H%M%S}')
+        self.create_debug_dir()
 
     def create_debug_dir(self):
-        os.makedirs(self.debug_dir, exist_ok=True)
+        if self.debug:
+            os.makedirs(self.debug_dir, exist_ok=True)
 
     def match_template(
             self,
@@ -536,7 +536,7 @@ class Action():
         else:
             target_x = x2 - 10
 
-        target_y = int(a*target_x + b) + 10
+        target_y = int(a*target_x + b) + 20
 
         logging.info(f'Shot to ({target_x}, {target_y})')
 
@@ -698,21 +698,18 @@ class Action():
                     max_dist = min_op_dist
                     max_index = my_index
 
-            if max_index == -1:
+            if max_index != -1:
+                logging.info(
+                    f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
+
+                self.swipe(config.kick_start_loc, my_centroids[max_index])
+
+                if self.debug:
+                    cv2.line(result, tuple(config.kick_start_loc), tuple(
+                        map(int, my_centroids[max_index])), (0, 255, 0), 2)
+                    cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
+            else:
                 logging.warning('Can\'t find proper player')
-                return False
-
-            logging.info(
-                f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
-
-            self.swipe(config.kick_start_loc, my_centroids[max_index])
-
-            if self.debug:
-                cv2.line(result, tuple(config.kick_start_loc), tuple(
-                    map(int, my_centroids[max_index])), (0, 255, 0), 2)
-                cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
-
-            return True
 
         backward_direction = False
         backward_index = -1
@@ -752,24 +749,24 @@ class Action():
                     max_dist = min_op_dist
                     max_index = my_index
 
-            if max_index == -1:
+            if max_index != -1:
+                logging.info(
+                    f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
+
+                self.swipe(
+                    config.kick_backward_start_locs[backward_start_index], my_centroids[max_index])
+
+                if self.debug:
+                    cv2.line(result, tuple(config.kick_backward_start_locs[backward_start_index]), tuple(map(int, my_centroids[max_index])), (0, 255, 255), 2)
+                    cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
+            else:
                 logging.warning('Can\'t find proper player')
-                return False
 
-            logging.info(
-                f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
-
-            self.swipe(
-                config.kick_backward_start_locs[backward_start_index], my_centroids[max_index])
-
-            if self.debug:
-                cv2.line(result, tuple(config.kick_backward_start_locs[backward_start_index]), tuple(map(int, my_centroids[max_index])), (0, 255, 0), 2)
-                cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
-
+        if forward_direction or backward_direction:
             return True
-
-        logging.error('Can\'t find both forward and backward kick situation')
-        cv2.imwrite(f'{self.debug_dir}\\error_image_{self.frame_index}.png', image)
+        else:
+            logging.error('Can\'t find both forward and backward kick situation')
+            cv2.imwrite(f'{self.debug_dir}\\error_image_{self.frame_index}.png', image)
 
         return False
 
