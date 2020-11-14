@@ -526,7 +526,7 @@ class Action():
 
         goal_post_length = image_processing.get_distance([x1, y1], [x2, y2])
         logging.debug(f'Goal post length: {goal_post_length}')
-        if goal_post_length < 150:
+        if (theta > 1.4 and theta < 1.8 and goal_post_length < 170) or goal_post_length < 150:
             logging.info(f'Goal post is far ({goal_post_length}). Give up shooting')
             return False
 
