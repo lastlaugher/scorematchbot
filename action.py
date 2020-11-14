@@ -535,7 +535,7 @@ class Action():
         else:
             target_x = x2 - 10
 
-        target_y = (y1 + y2) / 2 - 20
+        target_y = int(a*target_x + b) + 10
 
         logging.info(f'Shot to ({target_x}, {target_y})')
 
