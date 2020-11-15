@@ -19,11 +19,13 @@ unlock4 v (0.76)
 todo
 - kick
   v check the target is within valid range (using mask)
-  - issue: handle goal kick and header
-  - instead of max of min distance, decide safe path
-    - no opponent during the path
-  - Prevent shoot when the goal post size is less than threshold
-  - Add backword and header random kick 
+  v instead of max of min distance, decide safe path
+    v no opponent during the path
+  v Prevent shoot when the goal post size is less than threshold
+  v Add backword and header random kick 
+  v in kick situation, generate both forward and backward candidates to prevent misdetection
+  - in header case, can't find location
+  - issue: handle goal kick
   - debug fail cases
   - corner kick - header
   - kick off - kick to the goal keeper

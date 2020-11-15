@@ -64,3 +64,21 @@ def get_distance(vector1: [], vector2: []):
         sum += (item1 - item2) ** 2
 
     return m.sqrt(sum)
+
+def get_point_line_distance(vector0: [], vector1: [], vector2: []):
+    """Calculate distance from vector0 to the line composed of vector1 and vector2
+
+    Args:
+        vector0 ([]): x0, y0
+        vector1 ([]): x1, y1
+        vector2 ([]): x2, y2
+    """
+
+    x0 = vector0[0]
+    y0 = vector0[1]
+    x1 = vector1[0]
+    y1 = vector1[1]
+    x2 = vector2[0]
+    y2 = vector2[1]
+
+    return abs((y2-y1)*x0 - (x2-x1)*y0 + x2*y1 - y2*x1) / m.sqrt(get_distance(vector1, vector2))

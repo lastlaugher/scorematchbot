@@ -616,7 +616,6 @@ class Action():
 
         Args:
             image (np.ndarray): color image
-            debug (bool, optional): debug mode. Defaults to False.
 
         Returns:
             [type]: [description]
@@ -628,14 +627,14 @@ class Action():
         my_remove_list = []
         op_remove_list = []
         for my_index, my_position in enumerate(my_centroids):
-            if my_stats[my_index][4] > 1000:
-                my_remove_list.append(my_index)
-                continue
+#            if my_stats[my_index][4] > 1000:
+#                my_remove_list.append(my_index)
+#                continue
 
             for op_index, op_position in enumerate(op_centroids):
-                if op_stats[op_index][4] > 1000:
-                    op_remove_list.append(op_index)
-                    continue
+#                if op_stats[op_index][4] > 1000:
+#                    op_remove_list.append(op_index)
+#                    continue
 
                 horizontal_dist = abs(my_position[0] - op_position[0])
                 vertial_dist = abs(my_position[1] - op_position[1])
@@ -667,7 +666,7 @@ class Action():
         for index, position in enumerate(my_centroids):
             dist = image_processing.get_distance(
                 position, config.kick_start_loc)
-            if dist < 50:
+            if dist < 60:
                 forward_direction = True
                 forward_index = index
                 logging.info(f'Forward kick ({dist})')
@@ -683,11 +682,13 @@ class Action():
                 pos = list(map(int, my_position))
                 if self.forward_kick_mask[pos[1], pos[0]] == 0:
                     continue
-
+                    
                 min_op_dist = sys.maxsize
                 for op_position in op_centroids:
-                    dist = image_processing.get_distance(
-                        my_position, op_position)
+                    if op_position[1] < my_position[1]:
+                        continue
+
+                    dist = image_processing.get_point_line_distance(op_position, my_position, my_centroids[forward_index])
                     if dist < min_op_dist:
                         min_op_dist = dist
 
@@ -737,8 +738,10 @@ class Action():
 
                 min_op_dist = sys.maxsize
                 for op_position in reversed(op_centroids):
-                    dist = image_processing.get_distance(
-                        my_position, op_position)
+                    if op_position[1] > my_position[1]:
+                        continue
+
+                    dist = image_processing.get_point_line_distance(op_position, my_position, my_centroids[backward_index])
                     if dist < min_op_dist:
                         min_op_dist = dist
 
@@ -820,6 +823,10 @@ class Action():
         _, _, op_stats, op_centroid = cv2.connectedComponentsWithStats(
             opponent_mask_close)
 
+        if self.debug:
+            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_my_mask.png', my_mask_close)
+            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_op_mask.png', opponent_mask_close)
+            
         # Remove the first element which covers entire screen
         return my_stats[1:], my_centroid[1:], op_stats[1:], op_centroid[1:]
 
