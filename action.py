@@ -16,9 +16,10 @@ import math as m
 
 
 class Action():
-    def __init__(self, debug: bool = False):
+    def __init__(self, debug: bool = False, save_mask: bool = False):
         self.adb = Adb()
         self.debug = debug
+        self.save_mask = save_mask
         self.frame_index = 0
 
         self.forward_kick_mask = cv2.imread('templates/forward_kick_mask.png', cv2.IMREAD_GRAYSCALE)
@@ -772,7 +773,7 @@ class Action():
         image_eh = image_processing.hsv2eh(image_hsv)
 
         # mask for the green playground
-        playground_mask = cv2.inRange(image_eh, np.array(45, dtype=np.uint16), np.array(55, dtype=np.uint16))
+        playground_mask = cv2.inRange(image_eh, np.array(40, dtype=np.uint16), np.array(55, dtype=np.uint16))
         playground_mask = cv2.morphologyEx(playground_mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
         playground_mask = cv2.morphologyEx(playground_mask, cv2.MORPH_CLOSE, np.ones((55, 55), np.uint8))
 
@@ -817,9 +818,10 @@ class Action():
         _, _, op_stats, op_centroid = cv2.connectedComponentsWithStats(
             opponent_mask_close)
 
-#        if self.debug:
-#            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_my_mask.png', my_mask_close)
-#            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_op_mask.png', opponent_mask_close)
+        if self.debug and self.save_mask:
+            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_my_mask.png', my_mask_close)
+            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_op_mask.png', opponent_mask_close)
+            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_playground_mask.png', playground_mask)
             
         # Remove the first element which covers entire screen
         return my_stats[1:], my_centroid[1:], op_stats[1:], op_centroid[1:]
