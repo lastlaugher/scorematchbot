@@ -27,10 +27,8 @@ class Action():
             cv2.imread('templates/backward_kick_mask_2.png', cv2.IMREAD_GRAYSCALE),
         ]
 
-        self.debug_dir = os.path.join('debug', f'{datetime.datetime.now():%Y%m%d%H%M%S}')
-        self.create_debug_dir()
-
     def create_debug_dir(self):
+        self.debug_dir = os.path.join('debug', f'{datetime.datetime.now():%Y%m%d%H%M%S}')
         if self.debug:
             os.makedirs(self.debug_dir, exist_ok=True)
 
@@ -823,9 +821,9 @@ class Action():
         _, _, op_stats, op_centroid = cv2.connectedComponentsWithStats(
             opponent_mask_close)
 
-        if self.debug:
-            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_my_mask.png', my_mask_close)
-            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_op_mask.png', opponent_mask_close)
+#        if self.debug:
+#            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_my_mask.png', my_mask_close)
+#            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}_op_mask.png', opponent_mask_close)
             
         # Remove the first element which covers entire screen
         return my_stats[1:], my_centroid[1:], op_stats[1:], op_centroid[1:]
