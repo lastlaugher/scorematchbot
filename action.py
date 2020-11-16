@@ -418,6 +418,7 @@ class Action():
             if matched:
                 logging.info('Promotion pakcage. Touch close')
                 self.touch(config.promotion_package_close_loc)
+                time.sleep(3)
 
             logging.info('Trying to find video watch screen')
             matched, _ = self.match_template(
