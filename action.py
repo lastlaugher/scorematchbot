@@ -483,7 +483,7 @@ class Action():
         rho, theta = sorted(lines, key=lambda x: x[0][0])[index][0]
 
         logging.debug(f'rho: {rho} theta: {theta}')
-        if rho > 700 or theta < 1.0 or theta > 2.2:
+        if rho > 700 or theta < 0.8 or theta > 2.4:
             logging.debug('The goal post position is not valid')
             return False
 
@@ -625,14 +625,7 @@ class Action():
         my_remove_list = []
         op_remove_list = []
         for my_index, my_position in enumerate(my_centroids):
-#            if my_stats[my_index][4] > 1000:
-#                my_remove_list.append(my_index)
-#                continue
-
             for op_index, op_position in enumerate(op_centroids):
-#                if op_stats[op_index][4] > 1000:
-#                    op_remove_list.append(op_index)
-#                    continue
 
                 horizontal_dist = abs(my_position[0] - op_position[0])
                 vertial_dist = abs(my_position[1] - op_position[1])
@@ -709,6 +702,7 @@ class Action():
                     cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
             else:
                 logging.warning('Can\'t find proper player')
+                forward_direction = False
 
         backward_direction = False
         backward_index = -1
@@ -762,6 +756,7 @@ class Action():
                     cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
             else:
                 logging.warning('Can\'t find proper player')
+                backward_direction = False
 
         if forward_direction or backward_direction:
             return True
