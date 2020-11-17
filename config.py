@@ -74,10 +74,13 @@ timeout_loc = [329, 60, 61, 14]
 promotion_package_loc = [172, 390, 376, 43]
 promotion_package_close_loc = [643, 337]
 
-kick_start_loc = [358, 870]
+kick_start_loc = [360, 870]
 
 kick_backward_start_locs = [
     [360, 490],
     [360, 410],
 ]
+
+header_start_loc = [360, 774]
+
 dashboard_height = 200

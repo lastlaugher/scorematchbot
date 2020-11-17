@@ -8,7 +8,9 @@ import config
 
 def main():
 
+    image_dir = r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\shoot\*.png'
     image_dir = r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\kick\*.png'
+    image_dir = r'C:\Users\HOME\Pictures\MEmu Photo\Screenshots\reverse\*.png'
     show_image = False
 
     logging.basicConfig(

@@ -27,6 +27,7 @@ class Action():
             cv2.imread('templates/backward_kick_mask_1.png', cv2.IMREAD_GRAYSCALE),
             cv2.imread('templates/backward_kick_mask_2.png', cv2.IMREAD_GRAYSCALE),
         ]
+        self.header_mask = cv2.imread('templates/header_mask.png', cv2.IMREAD_GRAYSCALE)
 
     def create_debug_dir(self):
         self.debug_dir = os.path.join('debug', f'{datetime.datetime.now():%Y%m%d%H%M%S}')
@@ -543,9 +544,18 @@ class Action():
         self.adb.swipe(
             config.kick_start_loc[0], config.kick_start_loc[1], target_x, target_y, 500)
 
+        if self.debug:
+            cv2.circle(gray, (x1, y1), 5, (128,), -1)
+            cv2.circle(gray, (x2, y2), 5, (128,), -1)
+            cv2.line(gray, tuple(config.kick_start_loc), (target_x, target_y), (128,), 2)
+
+            cv2.imwrite(f'{self.debug_dir}\\shot_{self.frame_index}.png', gray)
+
         return True
 
     def kick(self, gray_image, color_image):
+        if self.debug:
+            cv2.imwrite(f'{self.debug_dir}\\frame_{self.frame_index}.png', color_image)
 
         if self.shoot(gray_image, color_image):
             return
@@ -644,127 +654,101 @@ class Action():
         if self.debug:
             result = np.zeros((image.shape[0], image.shape[1], 3), np.uint8)
 
-            for position in my_centroids:
-                cv2.circle(result, tuple(map(int, position)),
-                           10, (255, 0, 0), -1)
+            for index, position in enumerate(my_centroids):
+                position = tuple(map(int, position))
+                cv2.circle(result, position, 10, (255, 0, 0), -1)
+                cv2.putText(result, str(index), position, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-            for position in op_centroids:
-                cv2.circle(result, tuple(map(int, position)),
-                           10, (0, 0, 255), -1)
+            for index, position in enumerate(op_centroids):
+                position = tuple(map(int, position))
+                cv2.circle(result, position, 10, (0, 0, 255), -1)
+                cv2.putText(result, str(index), position, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-            cv2.imwrite(f'{self.debug_dir}\\frame_{self.frame_index}.png', image)
+        kicks = ['forward', 'backward1', 'backward2', 'header']
+        kick_found = [False, False, False, False]
+        kick_masks = [
+            self.forward_kick_mask, 
+            self.backward_kick_masks[0],
+            self.backward_kick_masks[1],
+            self.header_mask
+        ]
+        kick_colors = [
+            (0, 255, 0),    # green
+            (0, 255, 255),  # yellow
+            (255, 0, 255),  # magenta
+            (255, 255, 0),  # cyan
+        ]
+        kick_start_locs = [
+            config.kick_start_loc,
+            config.kick_backward_start_locs[0],
+            config.kick_backward_start_locs[1],
+            config.header_start_loc
+        ]
+        kick_distance_threshold = [60, 40, 40, 50]
 
-        forward_direction = False
-        forward_index = -1
-        for index, position in enumerate(my_centroids):
-            dist = image_processing.get_distance(
-                position, config.kick_start_loc)
-            if dist < 60:
-                forward_direction = True
-                forward_index = index
-                logging.info(f'Forward kick ({dist})')
-                break
-
-        if forward_direction:
-            max_dist = 0
-            max_index = -1
-            for my_index, my_position in enumerate(my_centroids):
-                if my_index == forward_index:
-                    continue
-
-                pos = list(map(int, my_position))
-                if self.forward_kick_mask[pos[1], pos[0]] == 0:
-                    continue
-                    
-                min_op_dist = sys.maxsize
-                for op_position in op_centroids:
-                    if op_position[1] < my_position[1]:
-                        continue
-
-                    dist = image_processing.get_point_line_distance(op_position, my_position, my_centroids[forward_index])
-                    if dist < min_op_dist:
-                        min_op_dist = dist
-
-                logging.debug(
-                    f'Minimum distance between player[{my_index}] and opponents: {min_op_dist}')
-
-                if max_dist < min_op_dist:
-                    max_dist = min_op_dist
-                    max_index = my_index
-
-            if max_index != -1:
-                logging.info(
-                    f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
-
-                self.swipe(config.kick_start_loc, my_centroids[max_index])
-
-                if self.debug:
-                    cv2.line(result, tuple(config.kick_start_loc), tuple(
-                        map(int, my_centroids[max_index])), (0, 255, 0), 2)
-                    cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
-            else:
-                logging.warning('Can\'t find proper player')
-                forward_direction = False
-
-        backward_direction = False
-        backward_index = -1
-        backward_start_index = -1
-        for index, position in enumerate(my_centroids):
-            for start_index, start_loc in enumerate(config.kick_backward_start_locs):
-                dist = image_processing.get_distance(position, start_loc)
-                if dist < 50:
-                    backward_direction = True
-                    backward_index = index
-                    backward_start_index = start_index
-                    logging.info(f'Backword kick ({dist})')
+        for kick_index, kick in enumerate(kicks):
+            for index, position in enumerate(my_centroids):
+                dist = image_processing.get_distance(
+                    position, kick_start_locs[kick_index])
+                if dist < kick_distance_threshold[kick_index]:
+                    kick_found[kick_index]= True
+                    kicker_index = index
+                    logging.info(f'{kick} kick ({dist})')
                     break
 
-        if backward_direction:
-            max_dist = 0
-            max_index = -1
-            for my_index, my_position in enumerate(my_centroids):
-                if my_index == backward_index:
-                    continue
-
-                pos = list(map(int, my_position))
-                if self.backward_kick_masks[backward_start_index][pos[1], pos[0]] == 0:
-                    continue
-
-                min_op_dist = sys.maxsize
-                for op_position in reversed(op_centroids):
-                    if op_position[1] > my_position[1]:
+            if kick_found[kick_index]:
+                max_dist = 0
+                max_index = -1
+                for my_index, my_position in enumerate(my_centroids):
+                    if my_index == kicker_index:
                         continue
 
-                    dist = image_processing.get_point_line_distance(op_position, my_position, my_centroids[backward_index])
-                    if dist < min_op_dist:
-                        min_op_dist = dist
+                    pos = list(map(int, my_position))
 
-                logging.debug(
-                    f'Minimum distance between player[{my_index}] and opponents: {min_op_dist}')
+                    if kick_masks[kick_index][pos[1], pos[0]] == 0:
+                        continue
 
-                if max_dist < min_op_dist:
-                    max_dist = min_op_dist
-                    max_index = my_index
+                    min_op_dist = sys.maxsize
+                    for op_position in op_centroids:
+                        if (kick == 'forward' or kick == 'header') and op_position[1] < my_position[1]:
+                            continue
 
-            if max_index != -1:
-                logging.info(
-                    f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
+                        if (kick == 'backword1' or kick == 'backward2') and op_position[1] > my_position[1]:
+                            continue
 
-                self.swipe(
-                    config.kick_backward_start_locs[backward_start_index], my_centroids[max_index])
+                        dist = image_processing.get_point_line_distance(op_position, my_position, my_centroids[kicker_index])
+                        if dist < min_op_dist:
+                            min_op_dist = dist
 
-                if self.debug:
-                    cv2.line(result, tuple(config.kick_backward_start_locs[backward_start_index]), tuple(map(int, my_centroids[max_index])), (0, 255, 255), 2)
-                    cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
-            else:
-                logging.warning('Can\'t find proper player')
-                backward_direction = False
+                    logging.debug(
+                        f'Minimum distance between player[{my_index}] and opponents: {min_op_dist}')
 
-        if forward_direction or backward_direction:
+                    if max_dist < min_op_dist:
+                        max_dist = min_op_dist
+                        max_index = my_index
+
+                if max_index != -1:
+                    logging.info(
+                        f'Kicked to player[{max_index}]({my_centroids[max_index]}) with opponent distance {max_dist}')
+
+                    self.swipe(kick_start_locs[kick_index], my_centroids[max_index])
+
+                    if self.debug:
+                        cv2.line(result, tuple(kick_start_locs[kick_index]), tuple(
+                            map(int, my_centroids[max_index])), kick_colors[kick_index], 2)
+                else:
+                    logging.warning('Can\'t find proper player')
+                    kick_found[kick_index] = False
+
+        if self.debug:
+            cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
+
+        if any(kick_found):
             return True
         else:
-            logging.error('Can\'t find both forward and backward kick situation')
-            cv2.imwrite(f'{self.debug_dir}\\error_image_{self.frame_index}.png', image)
+            logging.error('Can\'t find any of kick situation')
+            if self.debug:
+                cv2.imwrite(f'{self.debug_dir}\\error_image_{self.frame_index}.png', image)
 
         return False
 
