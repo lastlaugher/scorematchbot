@@ -684,7 +684,7 @@ class Action():
             config.kick_backward_start_locs[1],
             config.header_start_loc
         ]
-        kick_distance_threshold = [60, 40, 40, 50]
+        kick_distance_threshold = [80, 40, 40, 50]
 
         for kick_index, kick in enumerate(kicks):
             for index, position in enumerate(my_centroids):
