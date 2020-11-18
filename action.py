@@ -72,7 +72,7 @@ class Action():
             image = self.adb.get_screen()
 
         location = image_processing.find_template(image, template_image)
-        logging.debug(f'Reward location {location}')
+        logging.debug(f'Found location {location}')
 
         return location
 
@@ -422,13 +422,6 @@ class Action():
             if matched:
                 logging.info('Promotion pakcage. Touch close')
                 self.touch(config.promotion_package_close_loc)
-                time.sleep(3)
-
-            logging.info('Trying to find special window')
-            location = self.find_template('templates/window_close.png')
-            if location:
-                logging.info('Found special window. Touch close')
-                self.touch_box(location)
                 time.sleep(3)
 
             logging.info('Trying to find video watch screen')
