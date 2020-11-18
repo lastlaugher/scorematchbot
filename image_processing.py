@@ -30,7 +30,7 @@ def find_template(image: np.ndarray, template: np.ndarray):
     res = cv2.matchTemplate(image_gray, template_gray, cv2.TM_CCORR_NORMED, template_gray)
     _, max_val, _,  max_loc = cv2.minMaxLoc(res)
 
-    threshold = 0.8
+    threshold = 0.7
     if max_val < threshold:
         return None
 

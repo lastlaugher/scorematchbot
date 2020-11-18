@@ -65,9 +65,11 @@ class Action():
 
         return (True, score) if score > threshold else (False, score)
 
-    def find_template(self, template_path: str):
+    def find_template(self, template_path: str, image: np.ndarray = None):
         template_image = cv2.imread(template_path)
-        image = self.adb.get_screen()
+
+        if image is None:
+            image = self.adb.get_screen()
 
         location = image_processing.find_template(image, template_image)
         logging.debug(f'Reward location {location}')
@@ -422,6 +424,13 @@ class Action():
                 self.touch(config.promotion_package_close_loc)
                 time.sleep(3)
 
+            logging.info('Trying to find special window')
+            location = self.find_template('templates/window_close.png')
+            if location:
+                logging.info('Found special window. Touch close')
+                self.touch_box(location)
+                time.sleep(3)
+
             logging.info('Trying to find video watch screen')
             matched, _ = self.match_template(
                 'templates/watch_video.png', config.watch_video_loc)
@@ -433,8 +442,13 @@ class Action():
                 time.sleep(60)
 
                 logging.info('Finished playing video')
-                self.touch(config.video_package_close_loc)
-                self.touch(config.free_collect_end_loc)
+                location = find_template('templates/video_close.png')
+                if location:
+                    logging.info(f'Found close button: {location}')
+                else:
+                    self.touch(config.video_package_close_loc)
+                    self.touch(config.free_collect_end_loc)
+
                 time.sleep(3)
 
                 logging.info('Opening cards')
