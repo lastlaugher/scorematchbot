@@ -552,6 +552,10 @@ class Action():
 
         target_y = int(a*target_x + b) + 20
 
+        if target_y > config.kick_start_loc[1]:
+            logging.debug(f'It seems our goal post. Give up shooting')
+            return False
+
         logging.info(f'Shot to ({target_x}, {target_y})')
 
         self.adb.swipe(
