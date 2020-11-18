@@ -343,25 +343,23 @@ class Action():
 
         self.frame_index = 0
         while True:
-            color_image = self.adb.get_screen()
+            image1 = self.adb.get_screen()
 
             logging.info('Trying to find game end screen')
             matched, score = self.match_template(
-                'templates/game_end.png', config.game_end_loc, image=color_image)
+                'templates/game_end.png', config.game_end_loc, image=image1)
             if matched:
                 logging.info(f'Game ended ({score})')
                 break
 
             logging.info('Trying to find time out screen')
             matched, score = self.match_template(
-                'templates/timeout.png', config.timeout_loc, mask=True, threshold=0.95, image=color_image)
+                'templates/timeout.png', config.timeout_loc, mask=True, threshold=0.95, image=image1)
             if matched:
                 logging.info(f'Timeout ({score})')
                 break
 
-            image1 = self.adb.get_screen(color=False)
-            time.sleep(0.1)
-            image2 = self.adb.get_screen(color=False)
+            image2 = self.adb.get_screen()
 
             diff_image = image_processing.crop(image1, photo_loc) - image_processing.crop(image2, photo_loc)
             my_photo_diff = image_processing.crop(
@@ -369,8 +367,8 @@ class Action():
             opponent_photo_diff = image_processing.crop(
                 diff_image, config.opponent_photo_loc)
 
-            color_image = self.adb.get_screen()
-            gray_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+            gray_image = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+            color_image = image2
             if np.sum(my_photo_diff) != 0:
                 logging.info(f'{self.frame_index} My turn to kick')
                 self.kick(gray_image, color_image)
@@ -383,23 +381,24 @@ class Action():
             self.frame_index += 1
 
         while True:
+            image = self.adb.get_screen()
             logging.info('Trying to find shootout')
             matched, score = self.match_template(
-                'templates/shootout.png', config.shootout_loc, mask=True)
+                'templates/shootout.png', config.shootout_loc, mask=True, image=image)
             if matched:
                 logging.info(f'Shootout started ({score})')
                 self.play_shootout()
 
             logging.info('Trying to find game end')
             matched, score = self.match_template(
-                'templates/game_end.png', config.game_end_loc)
+                'templates/game_end.png', config.game_end_loc, image=image)
             if matched:
                 logging.info(f'Game ended ({score})')
                 self.touch_box(config.game_end_loc)
                 time.sleep(3)
                 break
 
-            time.sleep(1)
+            time.sleep(0.5)
 
         time.sleep(3)
 
@@ -617,6 +616,7 @@ class Action():
                 self.defend_penalty()
 
                 time.sleep(1)
+                not_found_count = 0
                 continue
 
             matched, score = self.match_template(
@@ -626,12 +626,13 @@ class Action():
                 self.kick_penalty()
 
                 time.sleep(1)
+                not_found_count = 0
                 continue
 
             logging.info('None of defence and offence found')
             not_found_count += 1
 
-            if not_found_count == 100:
+            if not_found_count == 10:
                 logging.info('Finished the shootout')
                 break
 
