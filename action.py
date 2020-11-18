@@ -333,17 +333,12 @@ class Action():
                 return
 
         logging.info('Game starated')
-        prev_image = self.adb.get_screen(color=False)
+
         photo_loc = [
             0,
             0,
-            prev_image.shape[1],
+            config.screen_size[1],
             config.my_photo_loc[1] + config.my_photo_loc[3]
-        ]
-
-        prev_image = prev_image[
-            photo_loc[1]:photo_loc[1] + photo_loc[3],
-            photo_loc[0]:photo_loc[0] + photo_loc[2]
         ]
 
         self.frame_index = 0
@@ -364,19 +359,18 @@ class Action():
                 logging.info(f'Timeout ({score})')
                 break
 
-            gray_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+            image1 = self.adb.get_screen(color=False)
+            time.sleep(0.1)
+            image2 = self.adb.get_screen(color=False)
 
-            cur_image = gray_image[
-                photo_loc[1]:photo_loc[1] + photo_loc[3],
-                photo_loc[0]:photo_loc[0] + photo_loc[2]
-            ]
-
-            diff_image = cur_image - prev_image
+            diff_image = image_processing.crop(image1, photo_loc) - image_processing.crop(image2, photo_loc)
             my_photo_diff = image_processing.crop(
                 diff_image, config.my_photo_loc)
             opponent_photo_diff = image_processing.crop(
                 diff_image, config.opponent_photo_loc)
 
+            color_image = self.adb.get_screen()
+            gray_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
             if np.sum(my_photo_diff) != 0:
                 logging.info(f'{self.frame_index} My turn to kick')
                 self.kick(gray_image, color_image)
@@ -386,7 +380,6 @@ class Action():
             else:
                 logging.info(f'{self.frame_index} In-progress')
 
-            prev_image = cur_image
             self.frame_index += 1
 
         while True:
