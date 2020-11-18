@@ -638,7 +638,7 @@ class Action():
             logging.info('None of defence and offence found')
             not_found_count += 1
 
-            if not_found_count == 10:
+            if not_found_count == 100:
                 logging.info('Finished the shootout')
                 break
 
