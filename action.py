@@ -448,7 +448,11 @@ class Action():
 
                 if not found_close_button:
                     logging.warning('Can\'t found video close button')
-                    cv2.imsave(f'{self.debug_dir}\\video_error.png', self.adb.get_screen())
+                    if self.debug:
+                        cv2.imwrite(f'{self.debug_dir}\\video_error.png', self.adb.get_screen())
+
+                    self.touch(config.video_package_close_loc)
+                    self.touch(config.free_collect_end_loc)
 
                 logging.info('Opening cards')
                 if not self.open_cards():
