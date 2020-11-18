@@ -572,9 +572,7 @@ class Action():
 
     def kick(self, gray_image, color_image):
         if self.debug:
-            logging.warning('before writing image')
             cv2.imwrite(f'{self.debug_dir}\\frame_{self.frame_index}.png', color_image)
-            logging.warning('after writing image')
 
         if self.shoot(gray_image, color_image):
             return
@@ -760,9 +758,7 @@ class Action():
                     kick_found[kick_index] = False
 
         if self.debug:
-            logging.warning('before writing image')
             cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
-            logging.warning('after writing image')
 
         if any(kick_found):
             return True
