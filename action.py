@@ -435,14 +435,20 @@ class Action():
                 time.sleep(60)
 
                 logging.info('Finished playing video')
-                location = find_template('templates/video_close.png')
-                if location:
-                    logging.info(f'Found close button: {location}')
-                else:
-                    self.touch(config.video_package_close_loc)
-                    self.touch(config.free_collect_end_loc)
 
-                time.sleep(3)
+                found_close_button = False
+                for index, loc in enumerate(config.video_close_locs):
+                    matched, _ = self.match_template(f'templates/video_close_{index}.png', loc)
+                    if matched:
+                        logging.info('Found close button')
+                        self.touch(loc)
+                        time.sleep(3)
+                        found_close_button = True
+                        break
+
+                if not found_close_button:
+                    logging.warning('Can\'t found video close button')
+                    cv2.imsave(f'{self.debug_dir}\\video_error.png', self.adb.get_screen())
 
                 logging.info('Opening cards')
                 if not self.open_cards():
@@ -562,7 +568,9 @@ class Action():
 
     def kick(self, gray_image, color_image):
         if self.debug:
+            logging.warning('before writing image')
             cv2.imwrite(f'{self.debug_dir}\\frame_{self.frame_index}.png', color_image)
+            logging.warning('after writing image')
 
         if self.shoot(gray_image, color_image):
             return
@@ -748,7 +756,9 @@ class Action():
                     kick_found[kick_index] = False
 
         if self.debug:
+            logging.warning('before writing image')
             cv2.imwrite(f'{self.debug_dir}\\result_{self.frame_index}.png', result)
+            logging.warning('after writing image')
 
         if any(kick_found):
             return True

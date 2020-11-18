@@ -58,6 +58,12 @@ video_package_cancel_loc = [200, 800]
 video_package_play_loc = [530, 800]
 video_package_close_loc = [48, 48]
 watch_video_loc = [428, 767, 198, 69]
+video_close_locs = [
+    [675, 15, 30, 29],
+    [666, 28, 23, 25],
+    [25, 23, 47, 49],
+    [655, 34, 35, 31],
+]
 
 my_photo_loc = [128, 20, 93, 112]
 opponent_photo_loc = [498, 20, 93, 112]
