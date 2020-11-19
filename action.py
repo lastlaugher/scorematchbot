@@ -91,7 +91,7 @@ class Action():
         self.adb.touch(coordinate[0], coordinate[1])
 
     def swipe(self, start: list, end: list):
-        self.adb.swipe(start[0], start[1], end[0], end[1], 500)
+        self.adb.swipe(start[0], start[1], end[0], end[1], 200)
 
     def open_package(self):
         template_path = 'templates/free_collect.png'
@@ -443,8 +443,8 @@ class Action():
                     if self.debug:
                         cv2.imwrite(f'{self.debug_dir}\\video_error.png', self.adb.get_screen())
 
-                    self.touch(config.video_package_close_loc)
                     self.touch(config.free_collect_end_loc)
+                    self.touch(config.video_package_close_loc)
 
                 logging.info('Opening cards')
                 if not self.open_cards():

@@ -26,10 +26,11 @@ todo
   v in kick situation, generate both forward and backward candidates to prevent misdetection
   v in header case, can't find location
   v Find close button after playing video. The location depends on.
-  - my turn detection performance
+  v my turn detection performance
+  - issue: in case of fast camera moving, capturing frame and real frame differs which causes wrong direction kick
   - issue: handle goal kick
-  - debug fail cases
-  - corner kick - header
+  - feature: rematch
+  - feature: corner kick - header
   - kick off - kick to the goal keeper
 
 win ratio
@@ -37,3 +38,5 @@ date  win/games ratio level arena
 11/17   9/   50   18%     7     3
 11/18   3/   16   19%     7     3
 11/18   1/   10   10%     7     4
+11/19   8/   26   31%     7     3
+11/19   5/   15   33%     7     2
