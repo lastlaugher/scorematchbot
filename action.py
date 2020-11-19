@@ -724,19 +724,25 @@ class Action():
                         continue
 
                     min_op_dist = sys.maxsize
-                    for op_position in op_centroids:
-                        if (kick == 'forward' or kick == 'header') and op_position[1] < my_position[1]:
+                    min_op_index = -1
+                    for op_index, op_position in enumerate(op_centroids):
+                        if (kick == 'forward' or kick == 'header') and \
+                            (op_position[1] < my_position[1] or 
+                            op_position[1] > my_centroids[kicker_index][1]):
                             continue
 
-                        if (kick == 'backword1' or kick == 'backward2') and op_position[1] > my_position[1]:
+                        if (kick == 'backword1' or kick == 'backward2') and \
+                            (op_position[1] > my_position[1] or 
+                            op_position[1] < my_centroids[kicker_index][1]):
                             continue
 
                         dist = image_processing.get_point_line_distance(op_position, my_position, my_centroids[kicker_index])
                         if dist < min_op_dist:
                             min_op_dist = dist
+                            min_op_index = op_index
 
                     logging.debug(
-                        f'Minimum distance between player[{my_index}] and opponents: {min_op_dist}')
+                        f'Minimum distance between player[{my_index}] and opponent[{min_op_index}]: {min_op_dist}')
 
                     if max_dist < min_op_dist:
                         max_dist = min_op_dist
