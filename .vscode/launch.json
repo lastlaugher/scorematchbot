@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "smbot.py",
-            "args": ["--log", "debug", "--debug", "--play-game", "--play-duration", "5"],
+            "args": ["--log", "debug", "--play-game", "--play-duration", "60"],
             "console": "integratedTerminal"
         }
     ]
