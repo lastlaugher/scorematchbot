@@ -87,6 +87,6 @@ kick_backward_start_locs = [
     [360, 410],
 ]
 
-header_start_loc = [360, 774]
+header_start_loc = [360, 790]
 
 dashboard_height = 200

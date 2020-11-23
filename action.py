@@ -367,14 +367,21 @@ class Action():
             opponent_photo_diff = image_processing.crop(
                 diff_image, config.opponent_photo_loc)
 
-            gray_image = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
-            color_image = image2
             if np.sum(my_photo_diff) != 0:
                 logging.info(f'{self.frame_index} My turn to kick')
+                diff_score = image_processing.diff_image(image1, image2)
+                logging.debug(f'frame diff score: {diff_score}')
+                if diff_score < 0.5:
+                    image2 = self.adb.get_screen()
+                    logging.debug(f'Since frame was captured while camera is moving, re-captured')
+
+                gray_image = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+                color_image = image2
+ 
                 self.kick(gray_image, color_image)
             elif np.sum(opponent_photo_diff) != 0:
                 logging.info(f'{self.frame_index} Opponent\'s turn to kick')
-                self.defend(gray_image, color_image)
+                #self.defend(gray_image, color_image)
             else:
                 logging.info(f'{self.frame_index} In-progress')
 
@@ -699,7 +706,7 @@ class Action():
             config.kick_backward_start_locs[1],
             config.header_start_loc
         ]
-        kick_distance_threshold = [80, 40, 40, 50]
+        kick_distance_threshold = [80, 40, 40, 60]
 
         for kick_index, kick in enumerate(kicks):
             for index, position in enumerate(my_centroids):
